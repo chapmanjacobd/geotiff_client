@@ -1,6 +1,7 @@
-@import "node_modules/ol/ol.css";
+@import "ol/ol.css";
 
-html, body {
+html,
+body {
   margin: 0;
   height: 100%;
 }
