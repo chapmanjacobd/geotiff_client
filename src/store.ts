@@ -3,7 +3,7 @@ import { API } from "./config";
 import { ref, readonly } from "vue";
 
 const appState = reactive({
-  layers: [] as Layer[],
+  layers: [] as Layer[] | LayerCompute[],
 });
 
 const computeUrl = (someKeys, queryParams = {}) => {
@@ -14,6 +14,7 @@ const computeUrl = (someKeys, queryParams = {}) => {
 
 const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
   if (layer.layerVars.length == 1) console.log("only one compute var");
+  if (layer.layerVars.length > 5) console.log("probably more vars than terracotta wants");
 
   const expr_proto = layer.layerVars.map((v, i) => {
     return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min}, ${v.filteredRange.max}))`;
