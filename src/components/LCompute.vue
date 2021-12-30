@@ -45,7 +45,7 @@ flex-direction: column;
             v-for="field in layerVars"
             v-bind:is="field.type"
             :key="field.id"
-            v-bind="{ id }"
+            v-bind="{ layerId: id, layerVarId: field.id }"
         ></component>
         <button type="button" v-on:click="addComponent('l-compute-variable')">Add Compute Variable</button>
         <LayerControls v-bind="{ id }"></LayerControls>
