@@ -38,7 +38,7 @@ export default defineComponent({
     </div>
 
     <div style="padding: 1em;">
-      <component v-for="field in layers" v-bind:is="field.type" :key="field.id"></component>
+      <component v-for="field in layers" v-bind:is="field.type" :key="field.id" v-bind="field"></component>
 
       <!-- <button type="button" v-on:click="addComponent('l-compute')">Add Compute Layer</button> -->
       <button type="button" v-on:click="addComponent('l-basemap')">Add Basemap Layer</button>

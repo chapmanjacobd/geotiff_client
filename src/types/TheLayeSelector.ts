@@ -3,15 +3,25 @@ interface Layer {
   id: number;
   label: string;
   opacity: number;
-  URL: string;
+  tileURL: string;
+}
+
+interface LayerCompute extends Layer {
+  layerVars: LayerVar[];
+  layerVarsExpression: string;
+  colorScale: string;
+  stretchedRange: Range;
 }
 
 interface LayerVar {
   type: string;
   id: number;
-  dataset?: string;
+  dataset: string;
+  actualRange: Range;
+  filteredRange: Range;
 }
 
-interface Dataset {
-  file: string;
+interface Range {
+  min: number;
+  max: number;
 }
