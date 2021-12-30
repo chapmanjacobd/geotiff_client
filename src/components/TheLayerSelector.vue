@@ -1,19 +1,15 @@
 <script lang='ts'>
-import LCompute from "./LCompute.vue";
+// import LCompute from "./LCompute.vue";
 import LBasemap from "./LBasemap.vue";
-import { defineComponent, onMounted } from "vue"
+import { defineComponent } from "vue"
 
 export default defineComponent({
-  components: { 'l-compute': LCompute, 'l-basemap': LBasemap },
+  components: { //'l-compute': LCompute,
+    'l-basemap': LBasemap
+  },
   setup() {
     let layers = [] as Layer[]
     let count = 0
-    onMounted(() => {
-
-
-      console.log('Component is mounted!')
-    })
-
 
     const addComponent = function (type) {
       layers.push({
@@ -44,7 +40,7 @@ export default defineComponent({
     <div style="padding: 1em;">
       <component v-for="field in layers" v-bind:is="field.type" :key="field.id" v-bind="field"></component>
 
-      <button type="button" v-on:click="addComponent('l-compute')">Add Compute Layer</button>
+      <!-- <button type="button" v-on:click="addComponent('l-compute')">Add Compute Layer</button> -->
       <button type="button" v-on:click="addComponent('l-basemap')">Add Basemap Layer</button>
     </div>
   </div>

@@ -16,7 +16,7 @@ export default defineComponent({
   <p>{{ layer.type }}</p>
 
   <h5>Map to add</h5>
-  <select x-on:change="addSingleband()">
-    <option v-for="d in LAYER_VARS" :value="d">{{ d.toLocaleUpperCase() }}</option>
+  <select>
+    <option v-for="d in LAYER_VARS">{{ d.toLocaleUpperCase() }}</option>
   </select>
 </template>

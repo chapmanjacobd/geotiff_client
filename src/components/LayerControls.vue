@@ -25,8 +25,8 @@ export default defineComponent({
     <button @click="moveLayerTo(index - 1)">Move down</button>
 
     <h5>Colorscale</h5>
-    <select v-model="$store.settings.colorscale">
-        <option v-for="label in COLORSCALES" :value="label"></option>
+    <select>
+        <option v-for="label in COLORSCALES">{{ label }}</option>
     </select>
 </template>
 
