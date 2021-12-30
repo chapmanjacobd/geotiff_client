@@ -1,24 +1,34 @@
 <script lang='ts'>
-// import LCompute from "./LCompute.vue";
+import LCompute from "./LCompute.vue";
 import LBasemap from "./LBasemap.vue";
-import { defineComponent, reactive } from "vue"
+import { defineComponent } from "vue"
+import { appState } from "../store";
 
 export default defineComponent({
-  components: { //'l-compute': LCompute,
+  components: {
+    'l-compute': LCompute,
     'l-basemap': LBasemap
   },
   setup() {
-    let layers = reactive<Layer[]>([])
     let count = 0
+    let layers = appState.layers
 
     const addComponent = function (type) {
-      layers.push({
+      const defaultLayer: Layer = {
         id: count++,
         'type': type,
         label: 'New layer',
-        URL: '',
-        opacity: 0.8
-      });
+        tileURL: '',
+        opacity: 0.8,
+      }
+      if (type == 'l-basemap')
+        layers.push(defaultLayer);
+      const defaultLayerCompute: LayerCompute = {
+        ...defaultLayer,
+        layerVars: [], layerVarsExpression: '', colorScale: '', stretchedRange: { min: 0, max: 1 }
+      }
+      if (type == 'l-compute')
+        layers.push(defaultLayerCompute);
     }
 
     return { addComponent, layers }
@@ -37,11 +47,20 @@ export default defineComponent({
       </a>
     </div>
 
-    <div style="padding: 1em;">
-      <component v-for="field in layers" v-bind:is="field.type" :key="field.id" v-bind="field"></component>
+    <div style="padding: 1em;
+display: flex;
+flex-direction: column;
+width: 20em;
+">
+      <component
+        v-for="field in layers"
+        v-bind:is="field.type"
+        :key="field.id"
+        v-bind="{ id: field.id }"
+      ></component>
 
-      <!-- <button type="button" v-on:click="addComponent('l-compute')">Add Compute Layer</button> -->
       <button type="button" v-on:click="addComponent('l-basemap')">Add Basemap Layer</button>
+      <button type="button" v-on:click="addComponent('l-compute')">Add Compute Layer</button>
     </div>
   </div>
 </template>

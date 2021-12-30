@@ -1,27 +1,29 @@
 <script lang='ts'>
 import LComputeVariable from "./LComputeVariable.vue";
+import LayerControls from "./ControlLayer.vue";
 import { defineComponent } from "vue"
-import LayerControls from "./LayerControls.vue";
-
+import { LAYER_VARS, appState } from "../store";
 
 
 export default defineComponent({
     components: { "l-compute-variable": LComputeVariable, LayerControls },
     props: { id: Number },
-    setup() {
+    setup(props) {
 
-        let layerVars = [] as LayerVar[]
+        let layerVars = (appState.layers[props.id] as LayerCompute).layerVars
         let count = 0
 
         const addComponent = function (type) {
             layerVars.push({
                 id: count++,
                 type: type,
-                dataset: 'osm_coffee_shops'
+                dataset: LAYER_VARS[0].file,
+                actualRange: { min: LAYER_VARS[0].min, max: LAYER_VARS[0].max },
+                filteredRange: { min: LAYER_VARS[0].min, max: LAYER_VARS[0].max },
             });
         }
 
-        // addComponent('l-compute-variable')
+        addComponent('l-compute-variable')
 
         return { addComponent, layerVars }
     },
@@ -29,12 +31,23 @@ export default defineComponent({
 </script>
 
 <template>
-    <div>
+    <div
+        style="background-color: burlywood;
+padding: 0.8em;
+line-height: 1em;
+margin: 0.2em;
+display: inline-flex;
+flex-direction: column;
+"
+    >
         <h3>{{ id }}</h3>
-        <component v-for="field in layerVars" v-bind:is="field.type" :key="field.id"></component>
+        <component
+            v-for="field in layerVars"
+            v-bind:is="field.type"
+            :key="field.id"
+            v-bind="{ id }"
+        ></component>
         <button type="button" v-on:click="addComponent('l-compute-variable')">Add Compute Variable</button>
-        <!-- <LayerControls index="$parent.id"></LayerControls> -->
+        <LayerControls v-bind="{ id }"></LayerControls>
     </div>
 </template>
-
-

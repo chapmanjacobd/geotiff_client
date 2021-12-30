@@ -10,18 +10,19 @@ interface LayerCompute extends Layer {
   layerVars: LayerVar[];
   layerVarsExpression: string;
   colorScale: string;
-  stretchedRange: Range;
+  stretchedRange: LayerRange;
 }
 
 interface LayerVar {
   type: string;
   id: number;
   dataset: string;
-  actualRange: Range;
-  filteredRange: Range;
+  actualRange: LayerRange;
+  filteredRange: LayerRange;
+  percentiles100?: number[];
 }
 
-interface Range {
+interface LayerRange {
   min: number;
   max: number;
 }
