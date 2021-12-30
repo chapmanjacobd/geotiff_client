@@ -1,14 +1,14 @@
 <script lang='ts'>
 // import LCompute from "./LCompute.vue";
 import LBasemap from "./LBasemap.vue";
-import { defineComponent } from "vue"
+import { defineComponent, reactive } from "vue"
 
 export default defineComponent({
   components: { //'l-compute': LCompute,
     'l-basemap': LBasemap
   },
   setup() {
-    let layers = [] as Layer[]
+    let layers = reactive<Layer[]>([])
     let count = 0
 
     const addComponent = function (type) {
