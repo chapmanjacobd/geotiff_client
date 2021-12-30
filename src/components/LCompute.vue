@@ -16,12 +16,12 @@ export default defineComponent({
         const addComponent = function (type) {
             layerVars.push({
                 id: count++,
-                'type': type,
+                type: type,
                 dataset: 'osm_coffee_shops'
             });
         }
 
-        addComponent('l-compute-variable')
+        // addComponent('l-compute-variable')
 
         return { addComponent, layerVars }
     },
@@ -33,7 +33,7 @@ export default defineComponent({
         <h3>{{ id }}</h3>
         <component v-for="field in layerVars" v-bind:is="field.type" :key="field.id"></component>
         <button type="button" v-on:click="addComponent('l-compute-variable')">Add Compute Variable</button>
-        <LayerControls index="$parent.id"></LayerControls>
+        <!-- <LayerControls index="$parent.id"></LayerControls> -->
     </div>
 </template>
 

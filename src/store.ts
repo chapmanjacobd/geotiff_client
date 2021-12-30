@@ -1,7 +1,34 @@
 import { reactive } from "vue";
 import { API } from "./config";
+import { ref, readonly } from "vue";
 
 const appState = reactive({});
+
+const theme = ref("dark");
+
+export function useThemeStore() {
+  /*
+<template>
+  <div>theme: {{ theme }}</div>
+  <button @click="toggle">Toggle</button>
+</template>
+
+<script setup>
+import { useThemeStore } from './useThemeStore'
+
+const { toggle, theme } = useThemeStore()
+</script>
+*/
+
+  const toggle = () => {
+    theme.value = theme.value === "dark" ? "light" : "dark";
+  };
+
+  return {
+    theme: readonly(theme),
+    toggle,
+  };
+}
 
 // const loadDatasets = async () => {
 //   let resp = await (await fetch(`${API}/datasets?limit=10000`)).json();
