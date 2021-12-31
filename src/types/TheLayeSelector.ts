@@ -1,6 +1,6 @@
 interface Layer {
   type: string;
-  id: number;
+  id: Number;
   label: string;
   opacity: number;
   tileURL: string;
@@ -15,7 +15,7 @@ interface LayerCompute extends Layer {
 
 interface LayerVar {
   type: string;
-  id: number;
+  id: Number;
   dataset: string;
   actualRange: LayerRange;
   filteredRange: LayerRange;

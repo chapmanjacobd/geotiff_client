@@ -53,10 +53,10 @@ flex-direction: column;
 width: 20em;
 ">
       <component
-        v-for="field in layers"
-        v-bind:is="field.type"
-        :key="field.id"
-        v-bind="{ id: field.id }"
+        v-for="layer in layers"
+        v-bind:is="layer.type"
+        :key="layer.id"
+        v-bind="{ layerId: layer.id }"
       ></component>
 
       <button type="button" v-on:click="addComponent('l-basemap')">Add Basemap Layer</button>

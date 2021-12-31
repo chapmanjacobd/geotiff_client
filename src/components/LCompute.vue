@@ -7,10 +7,11 @@ import { LAYER_VARS, appState } from "../store";
 
 export default defineComponent({
     components: { "l-compute-variable": LComputeVariable, LayerControls },
-    props: { id: Number },
+    props: { layerId: Number },
     setup(props) {
 
-        let layerVars = (appState.layers[props.id] as LayerCompute).layerVars
+        let layer = appState.layers[props.layerId] as LayerCompute
+        let layerVars = layer.layerVars
         let count = 0
 
         const addComponent = function (type) {
@@ -40,14 +41,14 @@ display: inline-flex;
 flex-direction: column;
 "
     >
-        <h3>{{ id }}</h3>
+        <h3>{{ layerId }}</h3>
         <component
-            v-for="field in layerVars"
-            v-bind:is="field.type"
-            :key="field.id"
-            v-bind="{ layerId: id, layerVarId: field.id }"
+            v-for="layerVar in layerVars"
+            v-bind:is="layerVar.type"
+            :key="layerVar.id"
+            v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
         ></component>
         <button type="button" v-on:click="addComponent('l-compute-variable')">Add Compute Variable</button>
-        <LayerControls v-bind="{ id }"></LayerControls>
+        <LayerControls v-bind="{ layerId }"></LayerControls>
     </div>
 </template>

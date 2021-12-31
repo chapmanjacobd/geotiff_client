@@ -1,10 +1,10 @@
 <script lang='ts'>
 import { defineComponent, ref } from "vue"
 import { LAYER_VARS } from '../store'
-import { shuffle } from '../utils'
+import ControlLayerVar from "./ControlLayerVar.vue"
 
 export default defineComponent({
-  components: {},
+  components: { ControlLayerVar },
   props: {
     layerId: Number,
     layerVarId: Number
@@ -25,4 +25,5 @@ export default defineComponent({
   <select v-model="selectedValue">
     <option v-for="d in LAYER_VARS" :value="d.file">{{ d.file.toLocaleUpperCase() }}</option>
   </select>
+  <ControlLayerVar v-bind="{ layerId, layerVarId }"></ControlLayerVar>
 </template>

@@ -1,13 +1,17 @@
 <script lang='ts'>
 import { defineComponent } from 'vue'
 import { appState } from '../store'
+import { array_move } from '../utils'
 
 export default defineComponent({
     props: {
-        key: Number
+        layerId: Number
     },
     setup(props) {
-        const moveLayerTo = (position) => {
+        let layers = appState.layers
+        const moveLayerTo = (index) => {
+            if (index < 0) return
+            array_move(layers, props.layerId, index)
         }
 
         const opacity = { min: 0, max: 1, value: 0.8, step: 0.01 }
@@ -20,8 +24,8 @@ export default defineComponent({
 
 <template>
     <div v-if="appState.layers.length > 1">
-        <button @click="moveLayerTo($props.key + 1)">Move up</button>
-        <button @click="moveLayerTo($props.key - 1)">Move down</button>
+        <button @click="moveLayerTo($props.layerId + 1)">Move up</button>
+        <button @click="moveLayerTo($props.layerId - 1)">Move down</button>
     </div>
 </template>
 
