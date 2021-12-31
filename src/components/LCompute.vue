@@ -22,7 +22,7 @@ export default defineComponent({
                 id: count++,
                 ...randomLayerVarOpt, type,
                 actualRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
-                filteredRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
+                filteredRange: { min: randomLayerVarOpt.min + 1, max: randomLayerVarOpt.max },
             });
         }
 
