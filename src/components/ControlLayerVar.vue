@@ -19,17 +19,22 @@ export default defineComponent({
             array_move(layerVars, props.layerVarId, index)
 
         }
+        const deleteLayerVar = (layerVarId) => {
+            layerVars.splice(layerVarId, 1)
+        }
+
         const filterSlider = { min: 0, max: 1, value: [0, 1], step: 0.01 }
 
-        return { moveLayerVarTo, appState }
+        return { moveLayerVarTo, deleteLayerVar, appState, layerVars }
     }
 })
 </script>
 
 <template>
-    <div v-if="appState.layers.length > 1">
-        <button @click="moveLayerVarTo($props.layerVarId + 1)">Move up</button>
-        <button @click="moveLayerVarTo($props.layerVarId - 1)">Move down</button>
+    <div v-if="layerVars.length > 1">
+        <button @click="moveLayerVarTo($props.layerVarId - 1)">Move up</button>
+        <button @click="moveLayerVarTo($props.layerVarId + 1)">Move down</button>
     </div>
+    <button @click="deleteLayerVar($props.layerVarId)">Delete</button>
 </template>
 
