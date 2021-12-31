@@ -1,8 +1,9 @@
 <script lang='ts'>
 import LComputeVariable from "./LComputeVariable.vue";
 import LayerControls from "./ControlLayer.vue";
-import { defineComponent } from "vue"
+import { computed, defineComponent } from "vue"
 import { LAYER_VARS, appState } from "../store";
+import { computeQueryParams } from "../utils";
 
 
 export default defineComponent({
@@ -12,23 +13,26 @@ export default defineComponent({
 
         let layer = appState.layers[props.layerId] as LayerCompute
         let layerVars = layer.layerVars
-        let count = 0
+        let count = 1
 
         const addComponent = function (type) {
+            const randomLayerVarOpt = LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)]
+
             layerVars.push({
                 id: count++,
-                type: type,
-                dataset: LAYER_VARS[0].file,
-                actualRange: { min: LAYER_VARS[0].min, max: LAYER_VARS[0].max },
-                filteredRange: { min: LAYER_VARS[0].min, max: LAYER_VARS[0].max },
+                ...randomLayerVarOpt, type,
+                actualRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
+                filteredRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
             });
         }
 
-        addComponent('l-compute-variable')
+        layer.tileURL = computeQueryParams(layer)
 
         return { addComponent, layerVars }
     },
 })
+
+
 </script>
 
 <template>
@@ -44,7 +48,7 @@ flex-direction: column;
         <h3>{{ layerId }}</h3>
         <component
             v-for="layerVar in layerVars"
-            v-bind:is="layerVar.type"
+            :is="layerVar.type"
             :key="layerVar.id"
             v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
         ></component>
@@ -52,3 +56,4 @@ flex-direction: column;
         <LayerControls v-bind="{ layerId }"></LayerControls>
     </div>
 </template>
+

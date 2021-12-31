@@ -1,7 +1,9 @@
 <script lang='ts'>
-import { defineComponent, ref } from "vue"
+import { computed, defineComponent, ref } from "vue"
 import { LAYER_VARS } from '../store'
 import ControlLayerVar from "./ControlLayerVar.vue"
+import { computeQueryParams } from "../utils";
+import { appState } from '../store';
 
 export default defineComponent({
   components: { ControlLayerVar },
@@ -9,20 +11,32 @@ export default defineComponent({
     layerId: Number,
     layerVarId: Number
   },
-  setup() {
+  setup(props) {
+    let layer = appState.layers[props.layerId] as LayerCompute
+    let layerVar = layer.layerVars[props.layerVarId]
     let selectedValue = ref('')
-    selectedValue.value = LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)].file
+    selectedValue.value = layerVar.file
+
+    layerVar = LAYER_VARS.find(lv => lv.file === selectedValue.value)[0]
+
+    appState.layers[props.layerId].tileURL = computed(function () {
+      return computeQueryParams(layer)
+    }).value
 
     return {
-      layer: { type: 'l-compute-variable' } as Layer, LAYER_VARS, selectedValue
+      LAYER_VARS, selectedValue, appState, computeQueryParams, layer
     }
   }
 })
 </script>
 
 <template>
-  <p>{{ layer.type }} {{ layerId }} {{ layerVarId }} {{ selectedValue }}</p>
-  <select v-model="selectedValue">
+  <p>{{ layerId }} {{ layerVarId }} {{ selectedValue }}</p>
+
+  <select
+    v-model="selectedValue"
+    @change="layer.layerVars[$props.layerVarId] = LAYER_VARS.find((x) => (x.file === selectedValue))[0]"
+  >
     <option v-for="d in LAYER_VARS" :value="d.file" :key="d.file">{{ d.file.toLocaleUpperCase() }}</option>
   </select>
   <ControlLayerVar v-bind="{ layerId, layerVarId }"></ControlLayerVar>

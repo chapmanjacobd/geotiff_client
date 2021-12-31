@@ -1,8 +1,8 @@
 <script lang='ts'>
 import LCompute from "./LCompute.vue";
 import LBasemap from "./LBasemap.vue";
-import { defineComponent, onUpdated } from "vue"
-import { appState } from "../store";
+import { defineComponent } from "vue"
+import { appState, COLORSCALES, LAYER_VARS } from "../store";
 
 export default defineComponent({
   components: {
@@ -20,15 +20,27 @@ export default defineComponent({
         label: 'New layer',
         tileURL: '',
         opacity: 0.8,
+        visible: true
       }
-      if (type == 'l-basemap')
+      if (type == 'l-basemap') {
         layers.push(defaultLayer);
-      const defaultLayerCompute: LayerCompute = {
-        ...defaultLayer,
-        layerVars: [], layerVarsExpression: '', colorScale: '', stretchedRange: { min: 0, max: 1 }
       }
-      if (type == 'l-compute')
+
+      if (type == 'l-compute') {
+        const randomLayerVarOpt = LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)]
+        const defaultLayerCompute: LayerCompute = {
+          ...defaultLayer,
+          stretchedRange: { min: 0, max: 1 }, colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)], layerVars:
+            [{
+              id: 0,
+              ...randomLayerVarOpt, type,
+              actualRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
+              filteredRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
+            }]
+          ,
+        }
         layers.push(defaultLayerCompute);
+      }
     }
 
 

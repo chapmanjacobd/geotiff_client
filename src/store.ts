@@ -1,48 +1,10 @@
 import { reactive } from "vue";
-import { API } from "./config";
 import { ref, readonly } from "vue";
 
 const appState = reactive({
   layers: [] as Layer[],
 });
 
-const computeUrl = (someKeys, queryParams = {}) => {
-  const queryString = new URLSearchParams(queryParams).toString();
-
-  return `${API}/compute/${someKeys}/{z}/{x}/{y}.png?${queryString}`;
-};
-
-const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
-  if (layer.layerVars.length == 1) console.log("only one compute var");
-  if (layer.layerVars.length > 5) console.log("probably more vars than terracotta wants");
-
-  const expr_proto = layer.layerVars.map((v, i) => {
-    return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min}, ${v.filteredRange.max}))`;
-  });
-  const expr = `setmask(v1, ${expr_proto.join(" | ")})`;
-
-  const operandKeys = {};
-  layer.layerVars.reduce((obj, v, i) => {
-    return { ...obj, [v[`v${i + 1}`]]: v.dataset };
-  }, operandKeys);
-  console.log(operandKeys);
-
-  return computeUrl(someKeys, {
-    colormap: layer.colorScale,
-    stretch_range: String([layer.stretchedRange.min, layer.stretchedRange.max]),
-    expression: expr,
-    ...operandKeys,
-  });
-};
-
-const fetchRange = async (dataset) => {
-  fetch(`${API}/metadata/${dataset}`).then((r) => {
-    r.json().then((j) => {
-      console.log(j);
-      return j["range"];
-    });
-  });
-};
 
 const theme = ref("dark");
 
@@ -74,6 +36,8 @@ const { toggle, theme } = useThemeStore()
 //   let resp = await (await fetch(`${API}/datasets?limit=10000`)).json();
 //   return resp.datasets as Dataset[];
 // };
+
+
 
 const COLORSCALES = [
   "accent_r",

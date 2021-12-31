@@ -78,8 +78,18 @@ export default {
         <ol-zoom-control />
         <ol-context-menu :items="contextMenuItems" />
 
-        <ol-tile-layer v-for="layer in layers" :key="layer.tileURL">
-            <ol-source-xyz crossorigin="anonymous" :url="layer.tileURL" />
+        <ol-tile-layer
+            v-for="layer in layers"
+            :key="layer.tileURL"
+            :opacity="layer.opacity"
+            :visible="layer.visible"
+        >
+            <ol-source-xyz
+                crossorigin="anonymous"
+                :url="layer.tileURL"
+                :tileSize="layer.tileURL.includes('localhost') ? [512, 512] : [256, 256]"
+                :transition="250"
+            />
         </ol-tile-layer>
     </ol-map>
 </template>

@@ -4,11 +4,11 @@ interface Layer {
   label: string;
   opacity: number;
   tileURL: string;
+  visible: boolean;
 }
 
 interface LayerCompute extends Layer {
   layerVars: LayerVar[];
-  layerVarsExpression: string;
   colorScale: string;
   stretchedRange: LayerRange;
 }
@@ -16,7 +16,7 @@ interface LayerCompute extends Layer {
 interface LayerVar {
   type: string;
   id: Number;
-  dataset: string;
+  file: string;
   actualRange: LayerRange;
   filteredRange: LayerRange;
   percentiles100?: number[];
