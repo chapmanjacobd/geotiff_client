@@ -60,6 +60,7 @@ export default {
     >
         <ol-view
             ref="view"
+            constrainResolution="true"
             :center="center"
             :rotation="rotation"
             :zoom="zoom"
