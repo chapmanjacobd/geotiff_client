@@ -1,7 +1,7 @@
 <script lang='ts'>
 import LCompute from "./LCompute.vue";
 import LBasemap from "./LBasemap.vue";
-import { defineComponent } from "vue"
+import { defineComponent, onUpdated } from "vue"
 import { appState } from "../store";
 
 export default defineComponent({
@@ -30,6 +30,7 @@ export default defineComponent({
       if (type == 'l-compute')
         layers.push(defaultLayerCompute);
     }
+
 
     return { addComponent, layers }
   },

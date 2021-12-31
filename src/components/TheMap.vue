@@ -1,6 +1,6 @@
 <script>
 
-import { ref } from 'vue'
+import { onUpdated, ref } from 'vue'
 import { appState } from '../store'
 
 export default {
@@ -60,7 +60,7 @@ export default {
     >
         <ol-view
             ref="view"
-            constrainResolution="true"
+            :constrainResolution="true"
             :center="center"
             :rotation="rotation"
             :zoom="zoom"
