@@ -12,6 +12,8 @@ export default defineComponent({
         let selectedValue = ref('');
         selectedValue.value = BASEMAPS[Math.floor(Math.random() * BASEMAPS.length)].value
 
+        appState.layers[props.layerId].tileURL = selectedValue.value
+
         return {
             layer: { type: 'l-basemap' } as Layer, BASEMAPS, selectedValue, appState
         }
