@@ -25,7 +25,7 @@ export default defineComponent({
     <p>{{ layer.type }} - {{ $props.layerId }} {{ selectedValue }}</p>
     <h5>Basemap</h5>
     <select v-model="selectedValue">
-        <option v-for="b in BASEMAPS" :value="b.value">{{ b.label }}</option>
+        <option v-for="b in BASEMAPS" :value="b.value" :key="b.value">{{ b.label }}</option>
     </select>
     <ControlLayer v-bind="{ layerId }"></ControlLayer>
 </template>

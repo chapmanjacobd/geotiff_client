@@ -17,7 +17,7 @@ export default defineComponent({
 <template>
     <h5>Colorscale</h5>
     <select>
-        <option v-for="label in COLORSCALES">{{ label }}</option>
+        <option v-for="label in COLORSCALES" :key="label" :value="label">{{ label }}</option>
     </select>
 </template>
 

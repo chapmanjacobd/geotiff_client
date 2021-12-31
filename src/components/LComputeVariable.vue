@@ -23,7 +23,7 @@ export default defineComponent({
 <template>
   <p>{{ layer.type }} {{ layerId }} {{ layerVarId }} {{ selectedValue }}</p>
   <select v-model="selectedValue">
-    <option v-for="d in LAYER_VARS" :value="d.file">{{ d.file.toLocaleUpperCase() }}</option>
+    <option v-for="d in LAYER_VARS" :value="d.file" :key="d.file">{{ d.file.toLocaleUpperCase() }}</option>
   </select>
   <ControlLayerVar v-bind="{ layerId, layerVarId }"></ControlLayerVar>
 </template>

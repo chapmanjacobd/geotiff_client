@@ -77,7 +77,7 @@ export default {
         <ol-zoom-control />
         <ol-context-menu :items="contextMenuItems" />
 
-        <ol-tile-layer v-for="layer in layers" :key="layer.id">
+        <ol-tile-layer v-for="layer in layers" :key="layer.tileURL">
             <ol-source-xyz crossorigin="anonymous" :url="layer.tileURL" />
         </ol-tile-layer>
     </ol-map>

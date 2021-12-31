@@ -54,8 +54,8 @@ width: 20em;
 ">
       <component
         v-for="layer in layers"
-        v-bind:is="layer.type"
         :key="layer.id"
+        :is="layer.type"
         v-bind="{ layerId: layer.id }"
       ></component>
 
