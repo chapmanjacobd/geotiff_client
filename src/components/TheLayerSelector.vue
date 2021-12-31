@@ -64,5 +64,3 @@ width: 20em;
     </div>
   </div>
 </template>
-
-
