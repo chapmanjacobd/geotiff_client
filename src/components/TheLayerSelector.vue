@@ -36,8 +36,8 @@ export default defineComponent({
       }
     }
 
-    addComponent('l-basemap')
-    addComponent('l-compute')
+    // addComponent('l-basemap')
+    // addComponent('l-compute')
 
     return { addComponent, appState }
   },
