@@ -11,7 +11,6 @@ export default defineComponent({
   },
   setup() {
     let count = 0
-    let layers = appState.layers
 
 
     const addComponent = function (type) {
@@ -24,7 +23,7 @@ export default defineComponent({
         visible: true
       }
       if (type == 'l-basemap') {
-        layers.push(defaultLayer);
+        appState.layers.push(defaultLayer);
       }
 
       if (type == 'l-compute') {
@@ -40,12 +39,12 @@ export default defineComponent({
           }]
           ,
         }
-        layers.push(defaultLayerCompute);
+        appState.layers.push(defaultLayerCompute);
       }
     }
 
 
-    return { addComponent, layers }
+    return { addComponent, appState }
   },
 })
 
@@ -69,7 +68,7 @@ flex-direction: column;
 width: 20em;
 ">
       <component
-        v-for="layer in layers"
+        v-for="layer in appState.layers"
         :key="layer.tileURL"
         :is="layer.type"
         v-bind="{ layerId: layer.id }"

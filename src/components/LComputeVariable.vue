@@ -13,11 +13,10 @@ export default defineComponent({
   },
   setup(props) {
     let layer = appState.layers[props.layerId] as LayerCompute
-    let layerVar = layer.layerVars[props.layerVarId]
     let selectedValue = ref('')
-    selectedValue.value = layerVar.file
+    selectedValue.value = layer.layerVars[props.layerVarId].file
 
-    layerVar = LAYER_VARS.find(lv => lv.file === selectedValue.value)[0]
+    layer.layerVars[props.layerVarId] = LAYER_VARS.find(lv => lv.file === selectedValue.value)[0]
 
     watchEffect(() => {
       layer.layerVars[props.layerVarId] = LAYER_VARS.find((x) => (x.file === selectedValue.value))[0]
@@ -25,7 +24,7 @@ export default defineComponent({
     })
 
     return {
-      LAYER_VARS, selectedValue, appState, computeQueryParams, layer
+      LAYER_VARS, selectedValue
     }
   }
 })

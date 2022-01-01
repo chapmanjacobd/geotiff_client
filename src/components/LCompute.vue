@@ -12,14 +12,12 @@ export default defineComponent({
     setup(props) {
 
         let layer = appState.layers[props.layerId] as LayerCompute
-        let layerVars = layer.layerVars
         let count = 1
 
-        const addComponent = function (type) {
-            layerVars.push({
+        const addLayerVar = function () {
+            layer.layerVars.push({
                 ...getRandomLayerVar(),
-                id: count++,
-                type
+                id: count++
             });
         }
 
@@ -27,7 +25,7 @@ export default defineComponent({
             layer.tileURL = computeQueryParams(layer)
         })
 
-        return { addComponent, layerVars }
+        return { addLayerVar, layerVars: layer.layerVars }
     },
 })
 
@@ -46,12 +44,12 @@ flex-direction: column;
     >
         <h3>{{ layerId }}</h3>
         <component
-            v-for="layerVar in layerVars"
+            v-for="layerVar in layerVars.filter(Boolean)"
             :is="layerVar.type"
             :key="`${layerVar.id}${layerVar.file}`"
             v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
         ></component>
-        <button type="button" v-on:click="addComponent('l-compute-variable')">Add Compute Variable</button>
+        <button type="button" v-on:click="addLayerVar()">Add Compute Variable</button>
         <LayerControls v-bind="{ layerId }"></LayerControls>
     </div>
 </template>

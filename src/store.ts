@@ -4188,6 +4188,7 @@ const LAYER_VARS = [
 ].map((lv) => {
   return {
     ...lv,
+    type: "l-compute-variable",
     actualRange: { min: lv.min, max: lv.max },
     filteredRange: { min: lv.min, max: lv.max },
     visible: true,
