@@ -2,7 +2,7 @@
 import LComputeVariable from "./LComputeVariable.vue";
 import LayerControls from "./ControlLayer.vue";
 import { computed, defineComponent, watchEffect } from "vue"
-import { LAYER_VARS, appState } from "../store";
+import { LAYER_VARS, appState, getRandomLayerVar } from "../store";
 import { computeQueryParams } from "../utils";
 
 
@@ -16,15 +16,10 @@ export default defineComponent({
         let count = 1
 
         const addComponent = function (type) {
-            const randomLayerVarOpt = LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)]
-
             layerVars.push({
-                ...randomLayerVarOpt,
+                ...getRandomLayerVar(),
                 id: count++,
-                type,
-                actualRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
-                filteredRange: { min: randomLayerVarOpt.min + 1, max: randomLayerVarOpt.max },
-                visible: true
+                type
             });
         }
 

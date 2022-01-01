@@ -41,7 +41,7 @@ const computeUrl = (someKeys, queryParams = {}) => {
 };
 
 const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
-  if (layer.layerVars.length == 1) console.log("only one compute var");
+  if (layer.layerVars.length === 1) console.log("only one compute var");
   if (layer.layerVars.length > 5) console.log("probably more vars than terracotta wants");
 
   const expr_proto = layer.layerVars
@@ -51,7 +51,7 @@ const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
       return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min}, ${v.filteredRange.max}))`;
     })
     .filter(Boolean);
-  const expr = `setmask(v1, ${expr_proto.join(" | ")})`;
+  const expr = layer.layerVars.length === 1 ? "v1" : `setmask(v1, ${expr_proto.join(" | ")})`;
 
   const operandKeys = layer.layerVars.reduce((obj, v, i) => {
     if (typeof v === typeof undefined) return obj;

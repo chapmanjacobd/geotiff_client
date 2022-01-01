@@ -5,7 +5,6 @@ const appState = reactive({
   layers: [] as Layer[],
 });
 
-
 const theme = ref("dark");
 
 function useThemeStore() {
@@ -37,7 +36,9 @@ const { toggle, theme } = useThemeStore()
 //   return resp.datasets as Dataset[];
 // };
 
-
+export function getRandomLayerVar() {
+  return LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)];
+}
 
 const COLORSCALES = [
   "accent_r",
@@ -4184,6 +4185,13 @@ const LAYER_VARS = [
     mean: 0.0020949497118042063,
     stdev: 0.11716352472562598,
   },
-];
+].map((lv) => {
+  return {
+    ...lv,
+    actualRange: { min: lv.min, max: lv.max },
+    filteredRange: { min: lv.min, max: lv.max },
+    visible: true,
+  };
+});
 
 export { appState, COLORSCALES, LAYER_VARS };

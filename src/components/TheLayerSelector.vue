@@ -2,7 +2,7 @@
 import LCompute from "./LCompute.vue";
 import LBasemap from "./LBasemap.vue";
 import { defineComponent } from "vue"
-import { appState, COLORSCALES, LAYER_VARS } from "../store";
+import { appState, COLORSCALES, getRandomLayerVar, LAYER_VARS } from "../store";
 
 export default defineComponent({
   components: {
@@ -12,6 +12,7 @@ export default defineComponent({
   setup() {
     let count = 0
     let layers = appState.layers
+
 
     const addComponent = function (type) {
       const defaultLayer: Layer = {
@@ -27,17 +28,16 @@ export default defineComponent({
       }
 
       if (type == 'l-compute') {
-        const randomLayerVarOpt = LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)]
+        const randomLayerVarOpt = getRandomLayerVar()
         const defaultLayerCompute: LayerCompute = {
           ...defaultLayer,
-          stretchedRange: { min: 0, max: 1 }, colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)], layerVars:
-            [{
-              ...randomLayerVarOpt,
-              id: 0, type,
-              actualRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
-              filteredRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
-              visible: true
-            }]
+          stretchedRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
+          colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)],
+          layerVars: [{
+            ...randomLayerVarOpt,
+            id: 0, type
+
+          }]
           ,
         }
         layers.push(defaultLayerCompute);
@@ -48,6 +48,8 @@ export default defineComponent({
     return { addComponent, layers }
   },
 })
+
+
 </script>
 
 <template>
