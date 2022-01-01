@@ -44,13 +44,18 @@ const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
   if (layer.layerVars.length == 1) console.log("only one compute var");
   if (layer.layerVars.length > 5) console.log("probably more vars than terracotta wants");
 
-  const expr_proto = layer.layerVars.map((v, i) => {
-if (!v.visible) return;
-    return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min}, ${v.filteredRange.max}))`;
-  });
-  const expr = `setmask(v1, ${expr_proto.filter(Boolean).join(" | ")})`;
+  const expr_proto = layer.layerVars
+    .map((v, i) => {
+      if (typeof v === typeof undefined) return;
+      if (!v.visible) return;
+      return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min}, ${v.filteredRange.max}))`;
+    })
+    .filter(Boolean);
+  const expr = `setmask(v1, ${expr_proto.join(" | ")})`;
 
   const operandKeys = layer.layerVars.reduce((obj, v, i) => {
+    if (typeof v === typeof undefined) return obj;
+    if (!v.visible) return obj;
     const key = "v" + (i + 1);
     return { ...obj, [key]: v.file };
   }, {});

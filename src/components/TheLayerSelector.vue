@@ -32,10 +32,11 @@ export default defineComponent({
           ...defaultLayer,
           stretchedRange: { min: 0, max: 1 }, colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)], layerVars:
             [{
-              id: 0,
-              ...randomLayerVarOpt, type,
+              ...randomLayerVarOpt,
+              id: 0, type,
               actualRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
               filteredRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
+              visible: true
             }]
           ,
         }
@@ -67,7 +68,7 @@ width: 20em;
 ">
       <component
         v-for="layer in layers"
-        :key="layer.id"
+        :key="layer.tileURL"
         :is="layer.type"
         v-bind="{ layerId: layer.id }"
       ></component>

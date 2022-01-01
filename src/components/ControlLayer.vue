@@ -1,6 +1,6 @@
 <script lang='ts'>
 import { defineComponent } from 'vue'
-import { appState } from '../store'
+import { appState, COLORSCALES } from '../store'
 import { array_move } from '../utils'
 
 export default defineComponent({
@@ -24,12 +24,18 @@ export default defineComponent({
             layers[layerId].visible = !visible
         }
 
-        return { moveLayerTo, appState, deleteLayer, toggleVisibility }
+        return { moveLayerTo, appState, deleteLayer, toggleVisibility, COLORSCALES }
     }
 })
 </script>
 
 <template>
+    <template v-if="appState.layers[layerId].type === 'l-compute'">
+        <h5>Colorscale</h5>
+        <select>
+            <option v-for="label in COLORSCALES" :key="label" :value="label">{{ label }}</option>
+        </select>
+    </template>
     <div v-if="appState.layers.length > 1">
         <button @click="moveLayerTo($props.layerId - 1)">Move up</button>
         <button @click="moveLayerTo($props.layerId + 1)">Move down</button>

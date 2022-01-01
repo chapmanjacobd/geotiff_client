@@ -1,7 +1,7 @@
 <script lang='ts'>
 import LComputeVariable from "./LComputeVariable.vue";
 import LayerControls from "./ControlLayer.vue";
-import { computed, defineComponent } from "vue"
+import { computed, defineComponent, watchEffect } from "vue"
 import { LAYER_VARS, appState } from "../store";
 import { computeQueryParams } from "../utils";
 
@@ -19,14 +19,18 @@ export default defineComponent({
             const randomLayerVarOpt = LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)]
 
             layerVars.push({
+                ...randomLayerVarOpt,
                 id: count++,
-                ...randomLayerVarOpt, type,
+                type,
                 actualRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
                 filteredRange: { min: randomLayerVarOpt.min + 1, max: randomLayerVarOpt.max },
+                visible: true
             });
         }
 
-        layer.tileURL = computeQueryParams(layer)
+        watchEffect(() => {
+            layer.tileURL = computeQueryParams(layer)
+        })
 
         return { addComponent, layerVars }
     },
@@ -49,7 +53,7 @@ flex-direction: column;
         <component
             v-for="layerVar in layerVars"
             :is="layerVar.type"
-            :key="layerVar.id"
+            :key="`${layerVar.id}${layerVar.file}`"
             v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
         ></component>
         <button type="button" v-on:click="addComponent('l-compute-variable')">Add Compute Variable</button>
