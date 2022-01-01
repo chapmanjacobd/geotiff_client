@@ -23,9 +23,12 @@ export default defineComponent({
             layerVars.splice(layerVarId, 1)
         }
 
-        const filterSlider = { min: 0, max: 1, value: [0, 1], step: 0.01 }
+        const toggleVisibility = (layerVarId) => {
+            const visible = layerVars[layerVarId].visible
+            layerVars[layerVarId].visible = !visible
+        }
 
-        return { moveLayerVarTo, deleteLayerVar, appState, layerVars }
+        return { moveLayerVarTo, toggleVisibility, deleteLayerVar, appState, layerVars }
     }
 })
 </script>
@@ -35,6 +38,7 @@ export default defineComponent({
         <button @click="moveLayerVarTo($props.layerVarId - 1)">Move up</button>
         <button @click="moveLayerVarTo($props.layerVarId + 1)">Move down</button>
     </div>
+    <input type="checkbox" @click="toggleVisibility($props.layerVarId)" /> Visible
     <button @click="deleteLayerVar($props.layerVarId)">Delete</button>
 </template>
 

@@ -20,6 +20,7 @@ interface LayerVar {
   actualRange: LayerRange;
   filteredRange: LayerRange;
   percentiles100?: number[];
+  visible: boolean;
 }
 
 interface LayerRange {

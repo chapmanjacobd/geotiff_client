@@ -18,10 +18,13 @@ export default defineComponent({
             layers.splice(layerId, 1)
         }
 
-        const opacity = { min: 0, max: 1, value: 0.8, step: 0.01 }
 
+        const toggleVisibility = (layerId) => {
+            const visible = layers[layerId].visible
+            layers[layerId].visible = !visible
+        }
 
-        return { moveLayerTo, appState, deleteLayer }
+        return { moveLayerTo, appState, deleteLayer, toggleVisibility }
     }
 })
 </script>
@@ -31,5 +34,6 @@ export default defineComponent({
         <button @click="moveLayerTo($props.layerId - 1)">Move up</button>
         <button @click="moveLayerTo($props.layerId + 1)">Move down</button>
     </div>
+    <input type="checkbox" @click="toggleVisibility($props.layerId)" /> Visible
     <button @click="deleteLayer($props.layerId)">Delete</button>
 </template>

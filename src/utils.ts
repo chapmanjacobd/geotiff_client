@@ -45,9 +45,10 @@ const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
   if (layer.layerVars.length > 5) console.log("probably more vars than terracotta wants");
 
   const expr_proto = layer.layerVars.map((v, i) => {
+if (!v.visible) return;
     return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min}, ${v.filteredRange.max}))`;
   });
-  const expr = `setmask(v1, ${expr_proto.join(" | ")})`;
+  const expr = `setmask(v1, ${expr_proto.filter(Boolean).join(" | ")})`;
 
   const operandKeys = layer.layerVars.reduce((obj, v, i) => {
     const key = "v" + (i + 1);
