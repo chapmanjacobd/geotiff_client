@@ -15,3 +15,8 @@ Using OpenLayers, Vite, TypeScript, Vue 3
                      jgs   ||                                 || ||
                     ^^^^^^^^^^^^^^^^^                         ^^ ^^
 ```
+
+```sh
+npm install
+npm start
+```
