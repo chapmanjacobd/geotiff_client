@@ -40,6 +40,19 @@ export default defineComponent({
         <button @click="moveLayerTo($props.layerId - 1)">Move up</button>
         <button @click="moveLayerTo($props.layerId + 1)">Move down</button>
     </div>
-    <input type="checkbox" @click="toggleVisibility($props.layerId)" /> Visible
+    <label>
+        Visible
+        <input type="checkbox" :value="appState.layers[layerId].visible" />
+    </label>
+    <label>
+        Opacity
+        <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            :value="appState.layers[layerId].opacity"
+        />
+    </label>
     <button @click="deleteLayer($props.layerId)">Delete</button>
 </template>

@@ -1,7 +1,6 @@
 interface Layer {
   type: string;
   id: Number;
-  label: string;
   opacity: number;
   tileURL: string;
   visible: boolean;

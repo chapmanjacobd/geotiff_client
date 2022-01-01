@@ -12,12 +12,10 @@ export default defineComponent({
   setup() {
     let count = 0
 
-
     const addComponent = function (type) {
       const defaultLayer: Layer = {
         id: count++,
         'type': type,
-        label: 'New layer',
         tileURL: '',
         opacity: 0.8,
         visible: true
@@ -32,17 +30,14 @@ export default defineComponent({
           ...defaultLayer,
           stretchedRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
           colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)],
-          layerVars: [{
-            ...randomLayerVarOpt,
-            id: 0, type
-
-          }]
-          ,
+          layerVars: [{ ...randomLayerVarOpt, id: 0, type }],
         }
         appState.layers.push(defaultLayerCompute);
       }
     }
 
+    addComponent('l-basemap')
+    addComponent('l-compute')
 
     return { addComponent, appState }
   },

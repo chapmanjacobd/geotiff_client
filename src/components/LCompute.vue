@@ -42,7 +42,7 @@ display: inline-flex;
 flex-direction: column;
 "
     >
-        <h3>{{ layerId }}</h3>
+        <h3>{{ layerId }} {{ layerVars.length }}</h3>
         <component
             v-for="layerVar in layerVars.filter(Boolean)"
             :is="layerVar.type"

@@ -16,10 +16,10 @@ export default defineComponent({
     let selectedValue = ref('')
     selectedValue.value = layer.layerVars[props.layerVarId].file
 
-    layer.layerVars[props.layerVarId] = LAYER_VARS.find(lv => lv.file === selectedValue.value)[0]
+    // layer.layerVars[props.layerVarId] = LAYER_VARS.find(lv => lv.file === selectedValue.value)[0]
 
     watchEffect(() => {
-      layer.layerVars[props.layerVarId] = LAYER_VARS.find((x) => (x.file === selectedValue.value))[0]
+      // layer.layerVars[props.layerVarId] = LAYER_VARS.find((x) => (x.file === selectedValue.value))[0]
       layer.tileURL = computeQueryParams(layer)
     })
 
