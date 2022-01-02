@@ -80,7 +80,7 @@ export default {
 
         <ol-tile-layer
             v-for="layer in layers"
-            :key="layer.tileURL"
+            :key="`${layer.id}${layer.tileURL}`"
             :opacity="layer.opacity"
             :visible="layer.visible"
         >
