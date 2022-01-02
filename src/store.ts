@@ -1,40 +1,8 @@
 import { reactive } from "vue";
-import { ref, readonly } from "vue";
 
 const appState = reactive({
   layers: [] as Layer[],
 });
-
-const theme = ref("dark");
-
-function useThemeStore() {
-  /*
-<template>
-  <div>theme: {{ theme }}</div>
-  <button @click="toggle">Toggle</button>
-</template>
-
-<script setup>
-import { useThemeStore } from './useThemeStore'
-
-const { toggle, theme } = useThemeStore()
-</script>
-*/
-
-  const toggle = () => {
-    theme.value = theme.value === "dark" ? "light" : "dark";
-  };
-
-  return {
-    theme: readonly(theme),
-    toggle,
-  };
-}
-
-// const loadDatasets = async () => {
-//   let resp = await (await fetch(`${API}/datasets?limit=10000`)).json();
-//   return resp.datasets as Dataset[];
-// };
 
 export function getRandomLayerVar() {
   return LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)];
