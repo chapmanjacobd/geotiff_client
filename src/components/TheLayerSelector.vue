@@ -64,7 +64,7 @@ width: 20em;
 ">
       <component
         v-for="layer in appState.layers"
-        :key="layer.tileURL"
+        :key="`${layer.id}${layer.tileURL}`"
         :is="layer.type"
         v-bind="{ layerId: layer.id }"
       ></component>
