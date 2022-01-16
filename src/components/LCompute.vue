@@ -34,7 +34,7 @@ export default defineComponent({
         <component
             v-for="layerVar in layer.layerVars.filter(Boolean)"
             :is="layerVar.type"
-            :key="`${layerVar.id}${layerVar.file}`"
+            :key="layerVar.id"
             v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
         ></component>
         <button type="button" v-on:click="map.addLayerVar(layer)">Add Compute Variable</button>

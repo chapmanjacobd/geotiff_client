@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { API } from "../config";
 import { COLORSCALES, LAYER_VARS } from "../data";
 import { v4 as uuidv4 } from "uuid";
+import { reactive } from "vue";
 
 interface Layer {
   type: string;
@@ -93,19 +94,19 @@ const fetchRange = async (dataset) => {
 };
 
 function newLayer() {
-  return {
+  return reactive({
     id: uuidv4(),
     tileURL: "",
     opacity: 0.8,
     visible: true,
-  };
+  });
 }
 
 function newLayerVar() {
-  return {
+  return reactive({
     ...getRandomLayerVar(),
     id: uuidv4(),
-  };
+  });
 }
 
 type LayerType = "l-basemap" | "l-compute";
@@ -113,21 +114,6 @@ type LayerType = "l-basemap" | "l-compute";
 function getRandomLayerVar() {
   return LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)];
 }
-
-const moveLayerVarTo = (index) => {
-  if (index < 0) return;
-  if (index >= layerVars.length - 1) return;
-
-  array_move(layerVars, props.layerVarId, index);
-};
-const deleteLayerVar = (layerVarId) => {
-  layerVars.splice(layerVarId, 1);
-};
-
-const toggleVisibility = (layerVarId) => {
-  const visible = layerVars[layerVarId].visible;
-  layerVars[layerVarId].visible = !visible;
-};
 
 export const useMapStore = defineStore({
   id: "map",
@@ -176,22 +162,39 @@ export const useMapStore = defineStore({
       // if (index >= map.layers.length - 1) return
       array_move(this.layers, i, i - 1);
     },
-    addLayerVar(layer: LayerCompute) {
-      layer.layerVars.push(newLayerVar());
-    },
-    removeLayerVar(layer: LayerCompute, layerVar: LayerVar) {
-      const i = layer.layerVars.findIndex((s) => s.id === layerVar.id);
-      if (i > -1) this.layers.splice(i, 1);
-    },
     toggleLayerVisibility(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
       const visible = this.layers[i].visible;
       this.layers[i].visible = !visible;
     },
+    addLayerVar(layerId) {
+      const layer = this.layerById(layerId);
+      layer.layerVars.push(newLayerVar());
+    },
+    removeLayerVar(layerId, layerVarId) {
+      const layer = this.layerById(layerId);
+      const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
+      if (i > -1) layer.layerVars.splice(i, 1);
+    },
+    moveLayerVarUp(layerId, layerVarId) {
+      const layer = this.layerById(layerId);
+      const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
+      // if (index < 0) return
+      // if (index >= map.layers.length - 1) return
+      array_move(layer.layerVars, i, i + 1);
+    },
+    moveLayerVarDown(layerId, layerVarId) {
+      const layer = this.layerById(layerId);
+      const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
+      // if (index < 0) return
+      // if (index >= map.layers.length - 1) return
+      array_move(layer.layerVars, i, i - 1);
+    },
     toggleLayerVarVisibility(layerId, layerVarId) {
-      const i = this.layers.findIndex((s) => s.id === layerId);
-      const visible = this.layers[i].visible;
-      this.layers[i].visible = !visible;
+      const layer = this.layerById(layerId);
+      const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
+      const visible = layer.layerVars[i].visible;
+      layer.layerVars[i].visible = !visible;
     },
   },
 });
