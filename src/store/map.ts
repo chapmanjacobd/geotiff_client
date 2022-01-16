@@ -151,14 +151,13 @@ export const useMapStore = defineStore({
       if (i > -1) this.layers.splice(i, 1);
     },
     moveLayerUp(layerId) {
-      console.log(this);
       const i = this.layers.findIndex((s) => s.id === layerId);
       // if (index < 0) return
       // if (index >= map.layers.length - 1) return
       array_move(this.layers, i, i + 1);
     },
     moveLayerDown(layerId) {
-      console.log(this);
+      console.log(this.layers);
       const i = this.layers.findIndex((s) => s.id === layerId);
       // if (index < 0) return
       // if (index >= map.layers.length - 1) return

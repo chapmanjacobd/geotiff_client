@@ -30,24 +30,21 @@ export default defineComponent({
         <button @click="map.moveLayerUp($props.layerId)">Move up</button>
         <button @click="map.moveLayerDown($props.layerId)">Move down</button>
     </div>
-    <!-- <label>
-        Visible
-        <input
-            type="checkbox"
-            :value="layer.visible"
-            @update:value="layer.visible = $event.value"
-        />
-    </label>-->
-    <label>
-        Opacity
-        <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            :value="layer.opacity"
-            @input="debounce(() => { layer.opacity = Number(($event.target as HTMLInputElement).value) })"
-        />
-    </label>
+    <label>Visible</label>
+    <input
+        type="checkbox"
+        :value="layer.visible"
+        @update:value="layer.visible = Boolean(($event.target as HTMLInputElement).value)"
+    />
+    <label>Opacity</label>
+    <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        :value="layer.opacity"
+        @update:value="debounce(() => { layer.opacity = Number(($event.target as HTMLInputElement).value) })"
+    />
+
     <button @click="map.removeLayer($props.layerId)">Delete</button>
 </template>
