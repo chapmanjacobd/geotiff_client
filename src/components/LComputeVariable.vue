@@ -1,30 +1,22 @@
 <script lang='ts'>
 import { defineComponent, ref, watchEffect } from "vue"
-import { LAYER_VARS } from '../store'
-import ControlLayerVar from "./ControlLayerVar.vue"
-import { computeQueryParams } from "../utils";
-import { appState } from '../store';
+import { LAYER_VARS } from '../data'
+import { LayerCompute, useMapStore } from "../store/map"
 
 export default defineComponent({
-  components: { ControlLayerVar },
   props: {
-    layerId: Number,
-    layerVarId: Number
+    layerId: String,
+    layerVarId: String
   },
   setup(props) {
-    let layer = appState.layers[props.layerId] as LayerCompute
+    const map = useMapStore()
+    let layer = map.layers[props.layerId] as LayerCompute
     let selectedValue = ref('')
     selectedValue.value = layer.layerVars[props.layerVarId].file
 
-    // layer.layerVars[props.layerVarId] = LAYER_VARS.find(lv => lv.file === selectedValue.value)[0]
-
-    watchEffect(() => {
-      // layer.layerVars[props.layerVarId] = LAYER_VARS.find((x) => (x.file === selectedValue.value))[0]
-      layer.tileURL = computeQueryParams(layer)
-    })
 
     return {
-      LAYER_VARS, selectedValue
+      LAYER_VARS, selectedValue, map, layer
     }
   }
 })
@@ -33,8 +25,13 @@ export default defineComponent({
 <template>
   <p>{{ layerId }} {{ layerVarId }} {{ selectedValue }}</p>
 
-  <select v-model="selectedValue">
+  <!-- <select v-model="selectedValue">
     <option v-for="d in LAYER_VARS" :value="d.file" :key="d.file">{{ d.file.toLocaleUpperCase() }}</option>
   </select>
-  <ControlLayerVar v-bind="{ layerId, layerVarId }"></ControlLayerVar>
+  <div v-if="layerVars.length > 1">
+    <button @click="map.moveLayerVarUp($props.layerVarId)">Move up</button>
+    <button @click="map.moveLayerVarDown($props.layerVarId)">Move down</button>
+  </div>
+  <input type="checkbox" @click="map.toggleVisibility($props.layerVarId)" /> Visible
+  <button @click="map.removeLayerVar(layer, $props.layerVarId)">Delete</button>-->
 </template>

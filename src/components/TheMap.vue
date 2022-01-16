@@ -1,11 +1,12 @@
 <script>
 
-import { onUpdated, ref } from 'vue'
-import { appState } from '../store'
+import { ref } from 'vue'
+import { useMapStore } from '../store/map'
 
 export default {
     setup() {
-        let layers = appState.layers
+        let map = useMapStore()
+        let layers = map.layers
 
         const center = ref([0, 0])
         const projection = ref('EPSG:3857')
@@ -31,9 +32,7 @@ export default {
 
         const logEvent = (event) => {
             console.log(event)
-
         }
-
 
         return {
             center,
@@ -80,14 +79,14 @@ export default {
 
         <ol-tile-layer
             v-for="layer in layers"
-            :key="`${layer.id}${layer.tileURL}`"
+            :key="layer.id"
             :opacity="layer.opacity"
             :visible="layer.visible"
         >
             <ol-source-xyz
                 crossorigin="anonymous"
                 :url="layer.tileURL"
-                :tileSize="layer.tileURL.includes('localhost') ? [512, 512] : [256, 256]"
+                :tileSize="layer.tileURL.includes('unli.xyz') ? [512, 512] : [256, 256]"
                 :transition="250"
             />
         </ol-tile-layer>

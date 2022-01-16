@@ -2,7 +2,7 @@
 import LCompute from "./LCompute.vue";
 import LBasemap from "./LBasemap.vue";
 import { defineComponent } from "vue"
-import { appState, COLORSCALES, getRandomLayerVar, LAYER_VARS } from "../store";
+import { useMapStore } from "../store/map";
 
 export default defineComponent({
   components: {
@@ -10,36 +10,13 @@ export default defineComponent({
     'l-basemap': LBasemap
   },
   setup() {
-    let count = 0
+    const map = useMapStore()
 
     const addComponent = function (type) {
-      const defaultLayer: Layer = {
-        id: count++,
-        'type': type,
-        tileURL: '',
-        opacity: 0.8,
-        visible: true
-      }
-      if (type == 'l-basemap') {
-        appState.layers.push(defaultLayer);
-      }
-
-      if (type == 'l-compute') {
-        const randomLayerVarOpt = getRandomLayerVar()
-        const defaultLayerCompute: LayerCompute = {
-          ...defaultLayer,
-          stretchedRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
-          colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)],
-          layerVars: [{ ...randomLayerVarOpt, id: 0, type }],
-        }
-        appState.layers.push(defaultLayerCompute);
-      }
+      map.addLayer(type)
     }
 
-    // addComponent('l-basemap')
-    // addComponent('l-compute')
-
-    return { addComponent, appState }
+    return { addComponent, map }
   },
 })
 
@@ -57,14 +34,15 @@ export default defineComponent({
       </a>
     </div>
 
-    <div style="padding: 1em;
-display: flex;
-flex-direction: column;
-width: 20em;
-">
+    <div
+      style="padding: 1em;
+      display: flex;
+      flex-direction: column;
+      width: 20em;"
+    >
       <component
-        v-for="layer in appState.layers"
-        :key="`${layer.id}${layer.tileURL}`"
+        v-for="layer in map.layers"
+        :key="layer.id"
         :is="layer.type"
         v-bind="{ layerId: layer.id }"
       ></component>

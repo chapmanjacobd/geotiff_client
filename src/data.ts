@@ -1,12 +1,4 @@
-import { reactive } from "vue";
 
-const appState = reactive({
-  layers: [] as Layer[],
-});
-
-export function getRandomLayerVar() {
-  return LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)];
-}
 
 const COLORSCALES = [
   "accent_r",
@@ -4163,4 +4155,4 @@ const LAYER_VARS = [
   };
 });
 
-export { appState, COLORSCALES, LAYER_VARS };
+export { COLORSCALES, LAYER_VARS };

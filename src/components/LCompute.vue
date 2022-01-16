@@ -2,54 +2,46 @@
 import LComputeVariable from "./LComputeVariable.vue";
 import LayerControls from "./ControlLayer.vue";
 import { computed, defineComponent, watchEffect } from "vue"
-import { LAYER_VARS, appState, getRandomLayerVar } from "../store";
-import { computeQueryParams } from "../utils";
+import { COLORSCALES } from '../data'
+import { LayerCompute, useMapStore } from "../store/map";
 
 
 export default defineComponent({
     components: { "l-compute-variable": LComputeVariable, LayerControls },
-    props: { layerId: Number },
+    props: { layerId: String },
     setup(props) {
 
-        let layer = appState.layers[props.layerId] as LayerCompute
-        let count = 1
+        const map = useMapStore()
+        const layer = map.layerById(props.layerId) as LayerCompute
 
-        const addLayerVar = function () {
-            layer.layerVars.push({
-                ...getRandomLayerVar(),
-                id: count++
-            });
-        }
-
-        watchEffect(() => {
-            layer.tileURL = computeQueryParams(layer)
-        })
-
-        return { addLayerVar, layerVars: layer.layerVars }
+        return { layer, map, COLORSCALES }
     },
 })
-
 
 </script>
 
 <template>
     <div
-        style="background-color: burlywood;
-padding: 0.8em;
-line-height: 1em;
-margin: 0.2em;
-display: inline-flex;
-flex-direction: column;
-"
+        style="
+    background-color: burlywood;
+    padding: 0.8em;
+    line-height: 1em;
+    margin: 0.2em;
+    display: inline-flex;
+    flex-direction: column;"
     >
-        <h3>{{ layerId }} {{ layerVars.length }}</h3>
+        <h3>{{ $props.layerId }} {{ layer.layerVars.length }}</h3>
         <component
-            v-for="layerVar in layerVars.filter(Boolean)"
+            v-for="layerVar in layer.layerVars.filter(Boolean)"
             :is="layerVar.type"
             :key="`${layerVar.id}${layerVar.file}`"
             v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
         ></component>
-        <button type="button" v-on:click="addLayerVar()">Add Compute Variable</button>
+        <button type="button" v-on:click="map.addLayerVar(layer)">Add Compute Variable</button>
+        <h5>Colorscale</h5>
+        <select>
+            <option v-for="label in COLORSCALES" :key="label" :value="label">{{ label }}</option>
+        </select>
         <LayerControls v-bind="{ layerId }"></LayerControls>
     </div>
 </template>
