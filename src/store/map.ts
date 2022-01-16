@@ -152,16 +152,18 @@ export const useMapStore = defineStore({
     },
     moveLayerUp(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
-      // if (index < 0) return
-      // if (index >= map.layers.length - 1) return
-      array_move(this.layers, i, i + 1);
+      const ti = i - 1;
+      if (ti < 0) return;
+      if (ti >= this.layers.length) return;
+      array_move(this.layers, i, ti);
     },
     moveLayerDown(layerId) {
       console.log(this.layers);
       const i = this.layers.findIndex((s) => s.id === layerId);
-      // if (index < 0) return
-      // if (index >= map.layers.length - 1) return
-      array_move(this.layers, i, i - 1);
+      const ti = i + 1;
+      if (ti <= 0) return;
+      if (ti >= this.layers.length) return;
+      array_move(this.layers, i, ti);
     },
     toggleLayerVisibility(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
