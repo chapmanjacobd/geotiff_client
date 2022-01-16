@@ -1,5 +1,5 @@
 <script lang='ts'>
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, watch } from 'vue'
 import { useMapStore } from '../store/map'
 
 export default defineComponent({
@@ -20,6 +20,10 @@ export default defineComponent({
             };
         }
 
+        watch(layer.visible, () => {
+            map.refreshComputeLayerTileURL(props.layerId)
+        })
+
         return { map, layer, debounce: createDebounce() }
     }
 })
@@ -35,11 +39,7 @@ export default defineComponent({
         </template>
     </div>
     <label>Visible</label>
-    <input
-        type="checkbox"
-        :value="layer.visible"
-        @update:value="layer.visible = Boolean(($event.target as HTMLInputElement).value)"
-    />
+    <input type="checkbox" :checked="layer.visible" v-model="layer.visible" />
     <label>Opacity</label>
     <input
         type="range"

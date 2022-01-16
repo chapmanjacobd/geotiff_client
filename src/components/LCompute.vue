@@ -10,7 +10,6 @@ export default defineComponent({
     components: { "l-compute-variable": LComputeVariable, LayerControls },
     props: { layerId: String },
     setup(props) {
-
         const map = useMapStore()
         const layer = map.layerById(props.layerId) as LayerCompute
 
