@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { API } from "../config";
 import { COLORSCALES, LAYER_VARS } from "../data";
 import { v4 as uuidv4 } from "uuid";
-import { reactive } from "vue";
+import { computed, reactive } from "vue";
 
 interface Layer {
   type: string;
@@ -130,6 +130,11 @@ export const useMapStore = defineStore({
       const i = this.layers.findIndex((s) => s.id === layerId);
       return this.layers[i];
     },
+    layerVarById(layerId, layerVarId) {
+      const i = this.layers.findIndex((s) => s.id === layerId);
+      const lvi = this.layers[i].layerVars.findIndex((s) => s.id === layerVarId);
+      return this.layers[i].layerVars[lvi];
+    },
     addLayer(type: LayerType) {
       if (type == "l-basemap") {
         this.layers.push({ ...newLayer(), type: "l-basemap" });
@@ -150,20 +155,27 @@ export const useMapStore = defineStore({
       const i = this.layers.findIndex((s) => s.id === layerId);
       if (i > -1) this.layers.splice(i, 1);
     },
-    moveLayerUp(layerId) {
+    canMoveLayerUp(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
       const ti = i - 1;
-      if (ti < 0) return;
-      if (ti >= this.layers.length) return;
-      array_move(this.layers, i, ti);
+      if (ti < 0) return false;
+      if (ti >= this.layers.length) return false;
+      return true;
     },
-    moveLayerDown(layerId) {
-      console.log(this.layers);
+    canMoveLayerDown(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
       const ti = i + 1;
-      if (ti <= 0) return;
-      if (ti >= this.layers.length) return;
-      array_move(this.layers, i, ti);
+      if (ti <= 0) return false;
+      if (ti >= this.layers.length) return false;
+      return true;
+    },
+    moveLayerUp(layerId) {
+      const i = this.layers.findIndex((s) => s.id === layerId);
+      array_move(this.layers, i, i - 1);
+    },
+    moveLayerDown(layerId) {
+      const i = this.layers.findIndex((s) => s.id === layerId);
+      array_move(this.layers, i, i + 1);
     },
     toggleLayerVisibility(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
@@ -198,6 +210,19 @@ export const useMapStore = defineStore({
       const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
       const visible = layer.layerVars[i].visible;
       layer.layerVars[i].visible = !visible;
+    },
+    updateLayerVar(layerId, layerVarId) {
+      const layer = this.layerById(layerId);
+      const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
+      let layerVar = layer.layerVars[i];
+      const file = layerVar.file;
+      layerVar = LAYER_VARS.find((lv) => lv.file === file)[0];
+    },
+    refreshComputeLayerTileURL(layerId) {
+      const layer = this.layerById(layerId);
+      const topLayerVar = layer.layerVars[0];
+      layer.stretchedRange = { min: topLayerVar.min, max: topLayerVar.max };
+      layer.tileURL = computeQueryParams(layer);
     },
   },
 });

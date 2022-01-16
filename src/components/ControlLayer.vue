@@ -27,8 +27,12 @@ export default defineComponent({
 
 <template>
     <div v-if="map.layers.length > 1">
-        <button @click="map.moveLayerUp($props.layerId)">Move up</button>
-        <button @click="map.moveLayerDown($props.layerId)">Move down</button>
+        <template v-if="map.canMoveLayerUp($props.layerId)">
+            <button @click="map.moveLayerUp($props.layerId)">Move up</button>
+        </template>
+        <template v-if="map.canMoveLayerDown($props.layerId)">
+            <button @click="map.moveLayerDown($props.layerId)">Move down</button>
+        </template>
     </div>
     <label>Visible</label>
     <input
