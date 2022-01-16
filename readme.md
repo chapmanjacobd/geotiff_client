@@ -1,6 +1,6 @@
 # GeoTiff Client for Terracotta
 
-Using OpenLayers, Vite, TypeScript, Vue 3
+Using OpenLayers, Vite, TypeScript, Vue 3, Pinia
 
 ```sh
                          _
