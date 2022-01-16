@@ -1,15 +1,26 @@
 <script lang='ts'>
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useMapStore } from '../store/map'
 
 export default defineComponent({
     props: {
         layerId: String
     },
-    setup() {
+    setup(props) {
         const map = useMapStore()
+        const layer = map.layerById(props.layerId)
 
-        return { map }
+        function createDebounce() {
+            let timeout = null;
+            return function (fnc, delayMs = 200) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    fnc();
+                }, delayMs);
+            };
+        }
+
+        return { map, layer, debounce: createDebounce() }
     }
 })
 </script>
@@ -19,13 +30,24 @@ export default defineComponent({
         <button @click="map.moveLayerUp($props.layerId)">Move up</button>
         <button @click="map.moveLayerDown($props.layerId)">Move down</button>
     </div>
-    <label>
+    <!-- <label>
         Visible
-        <input type="checkbox" :value="map.layers[$props.layerId].visible" />
-    </label>
+        <input
+            type="checkbox"
+            :value="layer.visible"
+            @update:value="layer.visible = $event.value"
+        />
+    </label>-->
     <label>
         Opacity
-        <input type="range" min="0" max="1" step="0.01" :value="map.layers[layerId].opacity" />
+        <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            :value="layer.opacity"
+            @input="debounce(() => { layer.opacity = Number(($event.target as HTMLInputElement).value) })"
+        />
     </label>
     <button @click="map.removeLayer($props.layerId)">Delete</button>
 </template>

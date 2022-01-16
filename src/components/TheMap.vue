@@ -1,12 +1,13 @@
 <script>
 
+import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 import { useMapStore } from '../store/map'
 
 export default {
     setup() {
-        let map = useMapStore()
-        let layers = map.layers
+        const map = useMapStore()
+        const { layers } = storeToRefs(map)
 
         const center = ref([0, 0])
         const projection = ref('EPSG:3857')
