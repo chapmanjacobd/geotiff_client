@@ -10,8 +10,7 @@ export default defineComponent({
         const map = useMapStore()
         const layer = map.layerById(props.layerId)
 
-        const BASEMAPS = [{ 'label': 'B&W Mapnik', 'value': 'https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png' }, { 'label': 'Google Satellite', 'value': 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}' }, { 'label': 'Google Hybrid', 'value': 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}' }, { 'label': 'Stamen Toner', 'value': 'http://a.tile.stamen.com/toner/{z}/{x}/{y}.png' }]
-        // layer.tileURL = ref('')
+        const BASEMAPS = [{ 'label': 'OpenStreetMap', 'value': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' }, { 'label': 'Google Satellite', 'value': 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}' }, { 'label': 'Google Hybrid', 'value': 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}' }, { 'label': 'Stamen Toner', 'value': 'http://a.tile.stamen.com/toner/{z}/{x}/{y}.png' }]
         layer.tileURL = BASEMAPS[Math.floor(Math.random() * BASEMAPS.length)].value
 
         return {
@@ -21,8 +20,7 @@ export default defineComponent({
 })
 </script>
 <template>
-    <p>{{ $props.layerId }} {{ layer.tileURL }}</p>
-    <h5>Basemap</h5>
+    <small>basemap {{ $props.layerId }}</small>
     <select v-model="layer.tileURL">
         <option v-for="b in BASEMAPS" :value="b.value" :key="b.value">{{ b.label }}</option>
     </select>

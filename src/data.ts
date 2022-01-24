@@ -1,4 +1,12 @@
-
+export function createDebounce() {
+  let timeout = null;
+  return function (fnc, delayMs = 200) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      fnc();
+    }, delayMs);
+  };
+}
 
 const COLORSCALES = [
   "accent_r",

@@ -9,9 +9,11 @@ export default {
         const map = useMapStore()
         const { layers } = storeToRefs(map)
 
-        const center = ref([0, 0])
+        // const center = ref([0, 0])
+        // const zoom = ref(2)
+        const center = ref([263249, 6250064])
+        const zoom = ref(11)
         const projection = ref('EPSG:3857')
-        const zoom = ref(2)
         const rotation = ref(0)
 
         const contextMenuItems = ref([])

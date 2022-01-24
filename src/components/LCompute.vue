@@ -1,9 +1,9 @@
 <script lang='ts'>
 import LComputeVariable from "./LComputeVariable.vue";
 import LayerControls from "./ControlLayer.vue";
-import { computed, defineComponent, watch, watchEffect } from "vue"
+import { computed, defineComponent, reactive, ref, watch, watchEffect } from "vue"
 import { COLORSCALES } from '../data'
-import { LayerCompute, useMapStore } from "../store/map";
+import { computeQueryParams, LayerCompute, useMapStore } from "../store/map";
 
 
 export default defineComponent({
@@ -12,6 +12,16 @@ export default defineComponent({
     setup(props) {
         const map = useMapStore()
         const layer = map.layerById(props.layerId) as LayerCompute
+
+        watch(reactive(layer.layerVars), () => {
+            if (layer.layerVars.length === 0) return;
+            const topLayerVar = layer.layerVars[0];
+            layer.stretchedRange = { min: topLayerVar.actualRange.min, max: topLayerVar.actualRange.max };
+        })
+
+        watch(reactive([layer.stretchedRange, layer.colorScale, layer.opacity, layer.visible, ...layer.layerVars]), () => {
+            computeQueryParams(layer);
+        })
 
         return { layer, map, COLORSCALES }
     },
@@ -29,7 +39,8 @@ export default defineComponent({
     display: inline-flex;
     flex-direction: column;"
     >
-        <h3>{{ $props.layerId }} {{ layer.layerVars.length }}</h3>
+        <small>compute layer {{ $props.layerId }}</small>
+        <small>{{ layer.layerVars.length }} variables</small>
         <component
             v-for="layerVar in layer.layerVars"
             :is="layerVar.type"
@@ -37,11 +48,8 @@ export default defineComponent({
             v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
         ></component>
         <button type="button" v-on:click="map.addLayerVar($props.layerId)">Add Compute Variable</button>
-        <h5>Colorscale</h5>
-        <select
-            v-model="layer.colorScale"
-            @update:modelValue="map.refreshComputeLayerTileURL($props.layerId)"
-        >
+        <label>Colorscale</label>
+        <select v-model="layer.colorScale">
             <option v-for="label in COLORSCALES" :key="label" :value="label">{{ label }}</option>
         </select>
         <LayerControls v-bind="{ layerId: $props.layerId }"></LayerControls>

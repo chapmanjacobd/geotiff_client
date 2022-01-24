@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "vite",
-    "build": "trash-put dist/ && vite build",
+    "build": "trash-put dist/; vite build",
     "serve": "vite preview"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 <script lang='ts'>
-import { defineComponent, ref, watch } from 'vue'
+import { defineComponent, reactive, ref, watch } from 'vue'
+import { createDebounce } from '../data'
 import { useMapStore } from '../store/map'
 
 export default defineComponent({
@@ -9,20 +10,6 @@ export default defineComponent({
     setup(props) {
         const map = useMapStore()
         const layer = map.layerById(props.layerId)
-
-        function createDebounce() {
-            let timeout = null;
-            return function (fnc, delayMs = 200) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    fnc();
-                }, delayMs);
-            };
-        }
-
-        watch(layer.visible, () => {
-            map.refreshComputeLayerTileURL(props.layerId)
-        })
 
         return { map, layer, debounce: createDebounce() }
     }
@@ -38,9 +25,10 @@ export default defineComponent({
             <button @click="map.moveLayerDown($props.layerId)">Move down</button>
         </template>
     </div>
-    <label>Visible</label>
-    <input type="checkbox" :checked="layer.visible" v-model="layer.visible" />
-    <label>Opacity</label>
+    <label>Layer Visibility</label>
+    <input type="checkbox" :checked="layer.visible" :value="layer.visible" />
+    <!-- v-model="layer.visible" -->
+    <label>Layer Opacity</label>
     <input
         type="range"
         min="0"
@@ -50,5 +38,5 @@ export default defineComponent({
         @update:value="debounce(() => { layer.opacity = Number(($event.target as HTMLInputElement).value) })"
     />
 
-    <button @click="map.removeLayer($props.layerId)">Delete</button>
+    <button @click="map.removeLayer($props.layerId)">Delete layer</button>
 </template>

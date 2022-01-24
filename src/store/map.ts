@@ -56,7 +56,7 @@ const computeUrl = (someKeys, queryParams = {}) => {
   return `${API}/compute/${someKeys}/{z}/{x}/{y}.png?${queryString}`;
 };
 
-const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
+export const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
   if (layer.layerVars.length === 1) console.log("only one compute var");
   if (layer.layerVars.length > 5) console.log("probably more vars than terracotta wants");
 
@@ -64,7 +64,9 @@ const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
     .map((v, i) => {
       if (typeof v === typeof undefined) return;
       if (!v.visible) return;
-      return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min}, ${v.filteredRange.max}))`;
+      return `getmask(masked_outside(v${i + 1}, ${v.filteredRange.min.toFixed(
+        6
+      )}, ${v.filteredRange.max.toFixed(6)}))`;
     })
     .filter(Boolean);
   const expr = layer.layerVars.length === 1 ? "v1" : `setmask(v1, ${expr_proto.join(" | ")})`;
@@ -76,11 +78,14 @@ const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
     return { ...obj, [key]: v.file };
   }, {});
 
-  return computeUrl(someKeys, {
+  layer.tileURL = computeUrl(someKeys, {
     colormap: layer.colorScale,
-    stretch_range: JSON.stringify([layer.stretchedRange.min, layer.stretchedRange.max]),
     expression: expr,
     ...operandKeys,
+    stretch_range: JSON.stringify([
+      layer.stretchedRange.min.toFixed(6),
+      layer.stretchedRange.max.toFixed(6),
+    ]),
   });
 };
 
@@ -128,12 +133,12 @@ export const useMapStore = defineStore({
   actions: {
     layerById(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
-      return this.layers[i];
+      return reactive(this.layers[i]) as Layer;
     },
     layerVarById(layerId, layerVarId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
       const lvi = this.layers[i].layerVars.findIndex((s) => s.id === layerVarId);
-      return this.layers[i].layerVars[lvi];
+      return reactive(this.layers[i].layerVars[lvi]) as LayerVar;
     },
     addLayer(type: LayerType) {
       if (type == "l-basemap") {
@@ -145,7 +150,8 @@ export const useMapStore = defineStore({
           ...newLayer(),
           type: "l-compute",
           stretchedRange: { min: randomLayerVarOpt.min, max: randomLayerVarOpt.max },
-          colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)],
+          // colorScale: COLORSCALES[Math.floor(Math.random() * COLORSCALES.length)],
+          colorScale: "accent_r",
           layerVars: [randomLayerVarOpt],
         };
         this.layers.push(defaultLayerCompute);
@@ -217,12 +223,6 @@ export const useMapStore = defineStore({
       let layerVar = layer.layerVars[i];
       const file = layerVar.file;
       layerVar = LAYER_VARS.find((lv) => lv.file === file)[0];
-    },
-    refreshComputeLayerTileURL(layerId) {
-      const layer = this.layerById(layerId);
-      const topLayerVar = layer.layerVars[0];
-      layer.stretchedRange = { min: topLayerVar.min, max: topLayerVar.max };
-      layer.tileURL = computeQueryParams(layer);
     },
   },
 });
