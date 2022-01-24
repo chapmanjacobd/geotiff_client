@@ -1,13 +1,12 @@
 <script>
 
-import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { storeToRefs, } from 'pinia'
+import { ref, reactive } from 'vue'
 import { useMapStore } from '../store/map'
 
 export default {
     setup() {
-        const map = useMapStore()
-        const { layers } = storeToRefs(map)
+        const mapdata = useMapStore()
 
         // const center = ref([0, 0])
         // const zoom = ref(2)
@@ -46,7 +45,7 @@ export default {
             vectorsource,
             view,
             logEvent,
-            layers
+            mapdata
         }
     },
 }
@@ -81,7 +80,7 @@ export default {
         <ol-context-menu :items="contextMenuItems" />
 
         <ol-tile-layer
-            v-for="layer in layers"
+            v-for="layer in mapdata.layers"
             :key="layer.id"
             :opacity="layer.opacity"
             :visible="layer.visible"

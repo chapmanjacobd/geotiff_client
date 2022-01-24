@@ -193,9 +193,10 @@ export const useMapStore = defineStore({
       layer.layerVars.push(newLayerVar());
     },
     removeLayerVar(layerId, layerVarId) {
-      const layer = this.layerById(layerId);
+      const layer = this.layerById(layerId) as LayerCompute;
       const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
       if (i > -1) layer.layerVars.splice(i, 1);
+      if (layer.layerVars.length === 0) this.removeLayer(layerId);
     },
     moveLayerVarUp(layerId, layerVarId) {
       const layer = this.layerById(layerId);

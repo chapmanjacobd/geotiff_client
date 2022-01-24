@@ -35,7 +35,7 @@ export default defineComponent({
     <button @click="map.moveLayerVarUp($props.layerId, $props.layerVarId)">Move up</button>
     <button @click="map.moveLayerVarDown($props.layerId, $props.layerVarId)">Move down</button>
   </div>
-  <div v-if="layerVar.id === layer.layerVars[0].id">
+  <div>
     <label>Filter range</label>
     <input
       type="range"
@@ -46,7 +46,7 @@ export default defineComponent({
       @update:value="debounce(() => { layerVar.filteredRange.min = Number(($event.target as HTMLInputElement).value) })"
     />
   </div>
-  <div v-else>
+  <div v-if="layerVar.id !== layer.layerVars[0].id">
     <label>Variable visibility</label>
     <input type="checkbox" :checked="layerVar.visible" />
   </div>
