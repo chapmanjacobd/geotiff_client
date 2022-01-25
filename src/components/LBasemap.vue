@@ -20,7 +20,7 @@ export default defineComponent({
 })
 </script>
 <template>
-    <small>basemap {{ $props.layerId }}</small>
+    <ui-divider :title="$props.layerId">basemap</ui-divider>
     <select v-model="layer.tileURL">
         <option v-for="b in BASEMAPS" :value="b.value" :key="b.value">{{ b.label }}</option>
     </select>
