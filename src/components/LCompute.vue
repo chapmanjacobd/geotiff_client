@@ -13,54 +13,62 @@ export default defineComponent({
         const map = useMapStore()
         const layer = map.layerById(props.layerId) as LayerCompute
 
-        watch(reactive(layer.layerVars), () => {
+        watch(layer.layerVars, () => {
             if (layer.layerVars.length === 0) return;
             const topLayerVar = layer.layerVars[0];
             layer.stretchedRange = { min: topLayerVar.actualRange.min, max: topLayerVar.actualRange.max };
-        })
+        }, { deep: true })
 
-        watch(reactive([layer.stretchedRange, layer.colorScale, layer.opacity, layer.visible, ...layer.layerVars]), () => {
+        watch(layer, () => {
             computeQueryParams(layer);
-        })
+        }, { deep: true })
 
-        return { layer, map, COLORSCALES, debounce: createDebounce(), stretchRange: [layer.stretchedRange.min, layer.stretchedRange.max] }
+        return { layer, map, COLORSCALES, debounce: createDebounce() }
     },
 })
 
 </script>
 
 <template>
-    <ui-divider :title="$props.layerId">compute layer</ui-divider>
     <div
         style="
-    background-color: burlywood;
-    padding: 0.8em;
-    line-height: 1em;
-    margin: 0.2em;
-    display: inline-flex;
-    flex-direction: column;"
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;"
     >
-        <label>Colorscale</label>
-        <select v-model="layer.colorScale">
-            <option v-for="label in COLORSCALES" :key="label" :value="label">{{ label }}</option>
-        </select>
-        <div>
-            <label>Stretch first variable color</label>
-            <ui-slider
-                v-model="stretchRange"
-                :min="layer.stretchedRange.min"
-                :max="layer.stretchedRange.max"
-            ></ui-slider>
+        <div style="font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 0.5em; margin-bottom: 0.5em;">
+            Compute Layer ({{ $props.layerId.substring(0,8) }}...)
         </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.2em;">
+            <label style="font-size: 0.8em; color: #666;">Colorscale</label>
+            <select v-model="layer.colorScale" style="padding: 0.4em;">
+                <option v-for="label in COLORSCALES" :key="label" :value="label">{{ label }}</option>
+            </select>
+        </div>
+
         <LayerControls v-bind="{ layerId: $props.layerId }"></LayerControls>
 
-        <component
-            v-for="layerVar in layer.layerVars"
-            :is="layerVar.type"
-            :key="layerVar.id"
-            v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
-        ></component>
-        <button type="button" v-on:click="map.addLayerVar($props.layerId)">Add Compute Variable</button>
+        <div style="margin-top: 1em; display: flex; flex-direction: column; gap: 1em;">
+            <div
+                v-for="layerVar in layer.layerVars"
+                :key="layerVar.id"
+                style="border-left: 2px solid #ccc; padding-left: 0.5em;"
+            >
+                <component
+                    :is="layerVar.type"
+                    v-bind="{ layerId: layerId, layerVarId: layerVar.id }"
+                ></component>
+            </div>
+        </div>
+
+        <button
+            type="button"
+            v-on:click="map.addLayerVar($props.layerId)"
+            style="margin-top: 0.5em; padding: 0.5em; cursor: pointer;"
+        >
+            Add Compute Variable
+        </button>
     </div>
 </template>
 

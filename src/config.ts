@@ -1,4 +1,5 @@
-// const API = "http://localhost:5000";
-const API = "https://unli.xyz/webmap/";
+const API = import.meta.env.DEV 
+    ? "http://localhost:5000" 
+    : "https://unli.xyz/webmap/";
 
 export { API };

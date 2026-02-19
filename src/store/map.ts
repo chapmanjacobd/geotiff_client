@@ -57,9 +57,6 @@ const computeUrl = (someKeys, queryParams = {}) => {
 };
 
 export const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
-  if (layer.layerVars.length === 1) console.log("only one compute var");
-  if (layer.layerVars.length > 5) console.log("probably more vars than terracotta wants");
-
   const expr_proto = layer.layerVars
     .map((v, i) => {
       if (typeof v === typeof undefined) return;
@@ -108,9 +105,14 @@ function newLayer() {
 }
 
 function newLayerVar() {
+  const randomVar = getRandomLayerVar();
   return reactive({
-    ...getRandomLayerVar(),
+    ...randomVar,
     id: uuidv4(),
+    type: "l-compute-variable",
+    actualRange: { min: randomVar.min, max: randomVar.max },
+    filteredRange: { min: randomVar.min, max: randomVar.max },
+    visible: true,
   });
 }
 
@@ -124,6 +126,8 @@ export const useMapStore = defineStore({
   id: "map",
   state: () => ({
     layers: [] as Layer[],
+    splitMode: 'single' as 'single' | 'horizontal' | 'vertical',
+    revision: 0,
   }),
   getters: {
     layersCount() {
@@ -131,14 +135,15 @@ export const useMapStore = defineStore({
     },
   },
   actions: {
+    forceUpdate() {
+      this.revision++;
+    },
     layerById(layerId) {
-      const i = this.layers.findIndex((s) => s.id === layerId);
-      return reactive(this.layers[i]) as Layer;
+      return this.layers.find((s) => s.id === layerId);
     },
     layerVarById(layerId, layerVarId) {
-      const i = this.layers.findIndex((s) => s.id === layerId);
-      const lvi = this.layers[i].layerVars.findIndex((s) => s.id === layerVarId);
-      return reactive(this.layers[i].layerVars[lvi]) as LayerVar;
+      const layer = this.layers.find((s) => s.id === layerId) as LayerCompute;
+      return layer?.layerVars.find((s) => s.id === layerVarId);
     },
     addLayer(type: LayerType) {
       if (type == "l-basemap") {
@@ -154,34 +159,39 @@ export const useMapStore = defineStore({
           colorScale: "accent_r",
           layerVars: [randomLayerVarOpt],
         };
+        computeQueryParams(defaultLayerCompute);
         this.layers.push(defaultLayerCompute);
       }
+      this.forceUpdate();
     },
     removeLayer(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
-      if (i > -1) this.layers.splice(i, 1);
+      if (i > -1) {
+        this.layers.splice(i, 1);
+        this.forceUpdate();
+      }
     },
     canMoveLayerUp(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
-      const ti = i - 1;
-      if (ti < 0) return false;
+      const ti = i + 1;
       if (ti >= this.layers.length) return false;
       return true;
     },
     canMoveLayerDown(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
-      const ti = i + 1;
-      if (ti <= 0) return false;
-      if (ti >= this.layers.length) return false;
+      const ti = i - 1;
+      if (ti < 0) return false;
       return true;
     },
     moveLayerUp(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
-      array_move(this.layers, i, i - 1);
+      array_move(this.layers, i, i + 1);
+      this.forceUpdate();
     },
     moveLayerDown(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
-      array_move(this.layers, i, i + 1);
+      array_move(this.layers, i, i - 1);
+      this.forceUpdate();
     },
     toggleLayerVisibility(layerId) {
       const i = this.layers.findIndex((s) => s.id === layerId);
@@ -219,11 +229,15 @@ export const useMapStore = defineStore({
       layer.layerVars[i].visible = !visible;
     },
     updateLayerVar(layerId, layerVarId) {
-      const layer = this.layerById(layerId);
+      const layer = this.layerById(layerId) as LayerCompute;
       const i = layer.layerVars.findIndex((s) => s.id === layerVarId);
-      let layerVar = layer.layerVars[i];
-      const file = layerVar.file;
-      layerVar = LAYER_VARS.find((lv) => lv.file === file)[0];
+      const file = layer.layerVars[i].file;
+      const newVarData = LAYER_VARS.find((lv) => lv.file === file);
+      if (newVarData) {
+        Object.assign(layer.layerVars[i], newVarData);
+        layer.layerVars[i].actualRange = { min: newVarData.min, max: newVarData.max };
+        layer.layerVars[i].filteredRange = { min: newVarData.min, max: newVarData.max };
+      }
     },
   },
 });

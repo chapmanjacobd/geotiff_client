@@ -20,9 +20,16 @@ export default defineComponent({
 })
 </script>
 <template>
-    <ui-divider :title="$props.layerId">basemap</ui-divider>
-    <select v-model="layer.tileURL">
-        <option v-for="b in BASEMAPS" :value="b.value" :key="b.value">{{ b.label }}</option>
-    </select>
-    <ControlLayer v-bind="{ layerId }"></ControlLayer>
+    <div style="display: flex; flex-direction: column; gap: 0.5em;">
+        <div style="font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 0.5em; margin-bottom: 0.5em;">
+            Basemap ({{ $props.layerId.substring(0,8) }}...)
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.2em;">
+            <label style="font-size: 0.8em; color: #666;">Source</label>
+            <select v-model="layer.tileURL" style="padding: 0.4em;">
+                <option v-for="b in BASEMAPS" :value="b.value" :key="b.value">{{ b.label }}</option>
+            </select>
+        </div>
+        <ControlLayer v-bind="{ layerId }"></ControlLayer>
+    </div>
 </template>
