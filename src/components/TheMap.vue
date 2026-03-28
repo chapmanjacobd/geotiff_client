@@ -1,7 +1,7 @@
 <script>
 
 import { storeToRefs, } from 'pinia'
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useMapStore } from '../store/map'
 
 export default {
@@ -16,16 +16,25 @@ export default {
         const rotation = ref(0)
 
         const contextMenuItems = ref([])
-        const vectorsource = ref(null)
-        const view = ref(null)
+
+        onMounted(() => {
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 500);
+        })
+
+        watch(() => mapdata.splitMode, () => {
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+        })
 
         contextMenuItems.value = [{
             text: 'Center map here',
-            classname: 'some-style-class', // add some CSS rules
-            callback: (val) => {
-                view.value.setCenter(val.coordinate)
-
-            } // `center` is your callback function
+            classname: 'some-style-class',
+            callback: (obj, map) => {
+                map.getView().setCenter(obj.coordinate)
+            }
         },
 
             '-' // this is a separator
@@ -42,8 +51,6 @@ export default {
             zoom,
             rotation,
             contextMenuItems,
-            vectorsource,
-            view,
             logEvent,
             mapdata
         }
@@ -53,44 +60,83 @@ export default {
 </script>
 
 <template>
-    <ol-map
-        ref="map"
-        :loadTilesWhileAnimating="true"
-        :loadTilesWhileInteracting="true"
-        style="height:1000px;width:1200px;position:absolute;right:0;top:0"
-    >
-        <ol-view
-            ref="view"
-            :constrainResolution="true"
-            :center="center"
-            :rotation="rotation"
-            :zoom="zoom"
-            :projection="projection"
-        />
-
-        <ol-fullscreen-control />
-        <ol-overviewmap-control>
-            <ol-tile-layer>
-                <ol-source-osm />
-            </ol-tile-layer>
-        </ol-overviewmap-control>
-
-        <ol-scaleline-control />
-        <ol-zoom-control />
-        <ol-context-menu :items="contextMenuItems" />
-
-        <ol-tile-layer
-            v-for="layer in mapdata.layers"
-            :key="layer.id"
-            :opacity="layer.opacity"
-            :visible="layer.visible"
+    <div :class="['map-container', mapdata.splitMode]">
+        <ol-map
+            v-for="i in (mapdata.splitMode === 'single' ? 1 : 2)"
+            :key="`map-${i}-${mapdata.revision}`"
+            :loadTilesWhileAnimating="true"
+            :loadTilesWhileInteracting="true"
+            class="map-instance"
+            style="height: 100%; width: 100%"
         >
-            <ol-source-xyz
-                crossorigin="anonymous"
-                :url="layer.tileURL"
-                :tileSize="layer.tileURL.includes('unli.xyz') ? [512, 512] : [256, 256]"
-                :transition="250"
+            <ol-view
+                :constrainResolution="true"
+                :center="center"
+                :rotation="rotation"
+                :zoom="zoom"
+                :projection="projection"
             />
-        </ol-tile-layer>
-    </ol-map>
+
+            <ol-fullscreen-control />
+            <ol-overviewmap-control>
+                <ol-tile-layer>
+                    <ol-source-osm />
+                </ol-tile-layer>
+            </ol-overviewmap-control>
+
+            <ol-scaleline-control />
+            <ol-zoom-control />
+            <ol-context-menu :items="contextMenuItems" />
+
+            <ol-tile-layer
+                v-for="layer in mapdata.layers"
+                :key="`${layer.id}-${layer.tileURL}-${layer.visible}-${layer.opacity}`"
+                :opacity="layer.opacity"
+                :visible="layer.visible"
+            >
+                <ol-source-xyz
+                    :url="layer.tileURL"
+                    :tileSize="layer.tileURL.includes('unli.xyz') ? [512, 512] : [256, 256]"
+                    :transition="250"
+                />
+            </ol-tile-layer>
+        </ol-map>
+    </div>
 </template>
+
+<style scoped>
+.map-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+}
+
+.map-container.single {
+    flex-direction: row;
+}
+
+.map-container.horizontal {
+    flex-direction: row;
+}
+
+.map-container.vertical {
+    flex-direction: column;
+}
+
+.map-instance {
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    display: block;
+    min-height: 100px;
+    min-width: 100px;
+}
+
+.vertical .map-instance {
+    height: 50%;
+    width: 100%;
+}
+</style>
