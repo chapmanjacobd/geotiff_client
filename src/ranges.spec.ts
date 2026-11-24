@@ -4,6 +4,7 @@ import {
   clampFilterMin,
   clampStretchMax,
   clampStretchMin,
+  initialFilterRange,
   initialStretch,
   stretchBounds,
 } from "./ranges";
@@ -94,5 +95,53 @@ describe("range helpers", () => {
       min: 5,
       max: 5 + 1e-6,
     });
+  });
+
+  it("excludes zero background from the initial filter range", () => {
+    const cases = [
+      {
+        name: "no percentile data keeps the full range",
+        bounds: { min: 0, max: 10 },
+        percentiles: undefined,
+        expected: { min: 0, max: 10 },
+      },
+      {
+        name: "a non-zero median keeps zero",
+        bounds: { min: 0, max: 10 },
+        percentiles: [0, 1, 2, 3, 4],
+        expected: { min: 0, max: 10 },
+      },
+      {
+        name: "non-zero minimum is unchanged",
+        bounds: { min: 1, max: 10 },
+        percentiles: [1, 1, 1],
+        expected: { min: 1, max: 10 },
+      },
+      {
+        name: "sparse integer counts start at one",
+        bounds: { min: 0, max: 8954 },
+        percentiles: [0, 0, 0, 0, 0],
+        expected: { min: 1, max: 8954 },
+      },
+      {
+        name: "the first positive percentile is used",
+        bounds: { min: 0, max: 10 },
+        percentiles: [0, 0, 0, 0.5, 2],
+        expected: { min: 0.5, max: 10 },
+      },
+      {
+        name: "sparse non-integer data excludes exactly zero",
+        bounds: { min: 0, max: 0.5 },
+        percentiles: [0, 0, 0, 0, 0],
+        expected: { min: 5e-7, max: 0.5 },
+      },
+    ];
+
+    for (const testCase of cases) {
+      expect(
+        initialFilterRange(testCase.bounds, testCase.percentiles),
+        testCase.name
+      ).toEqual(testCase.expected);
+    }
   });
 });

@@ -69,6 +69,11 @@ in `src/colormaps.ts` is the Terracotta colormap set.
   never receives a stretch range with `max <= min`.
 - The server exposes five compute operands (`v1`–`v5`), so the UI caps a layer
   at five variables.
+- Sparse count rasters whose metadata median is zero start with the filter
+  minimum above zero, keeping the background transparent. Lower the minimum to
+  include zero values again.
+- New basemaps are inserted below compute layers, so adding one does not hide
+  the data layers. Layer order buttons change the actual map stacking order.
 
 ## Split maps
 

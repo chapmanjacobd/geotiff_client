@@ -12,6 +12,7 @@ import {
   clampFilterMin,
   clampStretchMax,
   clampStretchMin,
+  initialFilterRange,
   initialStretch,
   type LayerRange,
 } from "../ranges";
@@ -187,7 +188,16 @@ export const useMapStore = defineStore("map", {
         opacity: 0.8,
         visible: true,
       };
-      this.layers.push(layer);
+      // Basemaps belong below data layers. Keep them above any earlier
+      // basemaps so a newly added basemap is still visible.
+      const firstCompute = this.layers.findIndex(
+        (item) => item.type === "l-compute"
+      );
+      if (firstCompute < 0) {
+        this.layers.push(layer);
+      } else {
+        this.layers.splice(firstCompute, 0, layer);
+      }
       return layer;
     },
     setBasemap(layerId: string, url: string) {
@@ -271,7 +281,10 @@ export const useMapStore = defineStore("map", {
           min: metadata.range[0],
           max: metadata.range[1],
         };
-        layerVar.filteredRange = { ...layerVar.actualRange };
+        layerVar.filteredRange = initialFilterRange(
+          layerVar.actualRange,
+          metadata.percentiles
+        );
 
         if (getOutputVar(layer)?.id === layerVarId) {
           layer.stretchedRange = initialStretch(layerVar.actualRange);

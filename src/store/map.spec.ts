@@ -199,6 +199,19 @@ describe("map store", () => {
     expect(layer.attribution).toContain("OpenStreetMap");
   });
 
+  it("inserts new basemaps below compute layers", () => {
+    const first = map.addBasemap();
+    map.layers.push(makeComputeLayer({ id: "layer-1" }));
+
+    const second = map.addBasemap();
+
+    expect(map.layers.map((layer) => layer.id)).toEqual([
+      first.id,
+      second.id,
+      "layer-1",
+    ]);
+  });
+
   it("loads the catalog and probes the server tile size", async () => {
     vi.stubGlobal(
       "fetch",
@@ -265,6 +278,29 @@ describe("map store", () => {
     expect(layer.stretchedRange).toEqual({ min: 1, max: 9 });
     expect(layer.tileURL).toContain("expression=");
     expect(layer.tileURL).toContain("tile_size=%5B512%2C512%5D");
+  });
+
+  it("filters out zero background in sparse count rasters", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          range: [0, 8954],
+          percentiles: new Array(100).fill(0),
+        })
+      )
+    );
+
+    const layer = await map.addLayer("l-compute");
+    if (!layer || layer.type !== "l-compute") return;
+
+    const layerVar = layer.layerVars[0];
+    expect(layerVar.filteredRange).toEqual({ min: 1, max: 8954 });
+    // The stretch still covers the full value range.
+    expect(layer.stretchedRange).toEqual({ min: 0, max: 8954 });
+    expect(layer.tileURL).toContain(
+      "masked_outside%28v1%2C+1.000000%2C+8954.000000%29"
+    );
   });
 
   it("updates ranges when the dataset changes", async () => {
