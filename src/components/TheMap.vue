@@ -69,7 +69,17 @@ export default {
 
     const maps = new Map<number, OlMapType>();
     const viewListeners: ViewListener[] = [];
+    const layerPropertiesCache = new Map<string, { layerId: string }>();
     let syncing = false;
+
+    function layerProperties(layerId: string) {
+      let properties = layerPropertiesCache.get(layerId);
+      if (!properties) {
+        properties = { layerId };
+        layerPropertiesCache.set(layerId, properties);
+      }
+      return properties;
+    }
 
     function hasViewListener(map: OlMapType): boolean {
       const view = map.getView();
@@ -222,6 +232,7 @@ export default {
       paneCount,
       renderableLayers,
       mapControls,
+      layerProperties,
       onMapEvent,
     };
   },
@@ -266,7 +277,7 @@ export default {
         v-for="(layer, index) in renderableLayers"
         :key="layer.id"
         :z-index="index + 1"
-        :properties="{ layerId: layer.id }"
+        :properties="layerProperties(layer.id)"
         :opacity="layer.opacity"
         :visible="layer.visible"
       >
