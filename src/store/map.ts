@@ -52,8 +52,9 @@ function array_move(arr, old_index, new_index) {
 
 const computeUrl = (someKeys, queryParams = {}) => {
   const queryString = new URLSearchParams(queryParams).toString();
+  const keyPath = someKeys ? `${someKeys}/` : "";
 
-  return `${API}/compute/${someKeys}/{z}/{x}/{y}.png?${queryString}`;
+  return `${API}/compute/${keyPath}{z}/{x}/{y}.png?${queryString}`;
 };
 
 export const computeQueryParams = (layer: LayerCompute, someKeys = "") => {
@@ -122,8 +123,7 @@ function getRandomLayerVar() {
   return LAYER_VARS[Math.floor(Math.random() * LAYER_VARS.length)];
 }
 
-export const useMapStore = defineStore({
-  id: "map",
+export const useMapStore = defineStore("map", {
   state: () => ({
     layers: [] as Layer[],
     splitMode: 'single' as 'single' | 'horizontal' | 'vertical',

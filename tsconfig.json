@@ -2,11 +2,14 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "importHelpers": true,
     "isolatedModules": true,
     "noEmit": true,
     "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
     "types": ["vite/client"]
-  }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "vite.config.js"]
 }

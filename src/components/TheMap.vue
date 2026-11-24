@@ -1,10 +1,31 @@
 <script>
 
-import { storeToRefs, } from 'pinia'
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useMapStore } from '../store/map'
+import { OlMap, OlView } from 'vue3-openlayers/map'
+import { OlTileLayer } from 'vue3-openlayers/layers'
+import { OlSourceOSM, OlSourceXYZ } from 'vue3-openlayers/sources'
+import {
+    OlContextMenuControl,
+    OlFullScreenControl,
+    OlOverviewMapControl,
+    OlScaleLineControl,
+    OlZoomControl,
+} from 'vue3-openlayers/controls'
 
 export default {
+    components: {
+        "ol-map": OlMap,
+        "ol-view": OlView,
+        "ol-tile-layer": OlTileLayer,
+        "ol-source-osm": OlSourceOSM,
+        "ol-source-xyz": OlSourceXYZ,
+        "ol-context-menu-control": OlContextMenuControl,
+        "ol-full-screen-control": OlFullScreenControl,
+        "ol-overview-map-control": OlOverviewMapControl,
+        "ol-scale-line-control": OlScaleLineControl,
+        "ol-zoom-control": OlZoomControl,
+    },
     setup() {
         const mapdata = useMapStore()
 
@@ -77,16 +98,16 @@ export default {
                 :projection="projection"
             />
 
-            <ol-fullscreen-control />
-            <ol-overviewmap-control>
+            <ol-full-screen-control />
+            <ol-overview-map-control>
                 <ol-tile-layer>
                     <ol-source-osm />
                 </ol-tile-layer>
-            </ol-overviewmap-control>
+            </ol-overview-map-control>
 
-            <ol-scaleline-control />
+            <ol-scale-line-control />
             <ol-zoom-control />
-            <ol-context-menu :items="contextMenuItems" />
+            <ol-context-menu-control :items="contextMenuItems" />
 
             <ol-tile-layer
                 v-for="layer in mapdata.layers"
