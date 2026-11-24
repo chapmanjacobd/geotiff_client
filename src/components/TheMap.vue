@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { MapEvent } from "ol";
 import type OlMapType from "ol/Map";
+import type OlTileLayerType from "ol/layer/Tile";
 import type View from "ol/View";
 import { OlMap as OlMapComponent, OlView } from "vue3-openlayers/map";
 import { OlTileLayer } from "vue3-openlayers/layers";
@@ -11,6 +12,7 @@ import {
   OlContextMenuControl,
   OlFullScreenControl,
   OlOverviewMapControl,
+  OlRotateControl,
   OlScaleLineControl,
   OlZoomControl,
 } from "vue3-openlayers/controls";
@@ -32,6 +34,7 @@ export default {
     "ol-context-menu-control": OlContextMenuControl,
     "ol-full-screen-control": OlFullScreenControl,
     "ol-overview-map-control": OlOverviewMapControl,
+    "ol-rotate-control": OlRotateControl,
     "ol-scale-line-control": OlScaleLineControl,
     "ol-zoom-control": OlZoomControl,
   },
@@ -42,6 +45,10 @@ export default {
     const zoom = ref(11);
     const projection = ref("EPSG:3857");
     const rotation = ref(0);
+
+    // OpenLayers adds defaults unless a controls collection is supplied.
+    // The template below declares every control explicitly.
+    const mapControls: never[] = [];
 
     const paneCount = computed(() =>
       mapdata.splitMode === "single" ? 1 : 2
@@ -130,11 +137,44 @@ export default {
       }
     }
 
+    // vue3-openlayers updates tile URLs reactively but only applies source
+    // attributions when the source is constructed. Update them explicitly so
+    // switching basemaps keeps the copyright notice accurate.
+    function syncSourceAttributions() {
+      for (const map of maps.values()) {
+        for (const olLayer of map.getLayers().getArray()) {
+          const layerId = olLayer.get("layerId");
+          if (layerId === undefined) continue;
+          const layer = mapdata.layers.find((item) => item.id === layerId);
+          if (!layer || layer.type !== "l-basemap") continue;
+          (olLayer as OlTileLayerType)
+            .getSource()
+            ?.setAttributions(layer.attribution);
+        }
+      }
+    }
+
+    watch(
+      () =>
+        mapdata.layers.map((layer) =>
+          layer.type === "l-basemap" ? layer.attribution : ""
+        ),
+      () => syncSourceAttributions()
+    );
+
     function registerMap(index: number, map: OlMapType) {
       if (!map || typeof map.getView !== "function") return;
       const isNew = maps.get(index) !== map;
       maps.set(index, map);
-      if (isNew || !hasViewListener(map)) attachViewSync();
+      const viewport = map.getViewport();
+      if (viewport && !viewport.hasAttribute("tabindex")) {
+        viewport.setAttribute("tabindex", "0");
+        viewport.setAttribute("aria-label", "Interactive map");
+      }
+      if (isNew || !hasViewListener(map)) {
+        attachViewSync();
+        syncSourceAttributions();
+      }
     }
 
     function onMapEvent(index: number, event: MapEvent) {
@@ -149,6 +189,7 @@ export default {
       window.setTimeout(() => {
         pruneMaps();
         attachViewSync();
+        syncSourceAttributions();
         resizeMaps();
       }, 500);
     });
@@ -160,6 +201,7 @@ export default {
         window.setTimeout(() => {
           pruneMaps();
           attachViewSync();
+          syncSourceAttributions();
           resizeMaps();
         }, 100);
       }
@@ -179,6 +221,7 @@ export default {
       mapdata,
       paneCount,
       renderableLayers,
+      mapControls,
       onMapEvent,
     };
   },
@@ -190,6 +233,7 @@ export default {
     <ol-map
       v-for="i in paneCount"
       :key="`map-${i}`"
+      :controls="mapControls"
       :load-tiles-while-animating="true"
       :load-tiles-while-interacting="true"
       class="map-instance"
@@ -214,12 +258,15 @@ export default {
 
       <ol-scale-line-control />
       <ol-zoom-control />
+      <ol-rotate-control />
       <ol-attribution-control />
       <ol-context-menu-control :items="contextMenuItems" />
 
       <ol-tile-layer
-        v-for="layer in renderableLayers"
+        v-for="(layer, index) in renderableLayers"
         :key="layer.id"
+        :z-index="index + 1"
+        :properties="{ layerId: layer.id }"
         :opacity="layer.opacity"
         :visible="layer.visible"
       >

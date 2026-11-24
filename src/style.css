@@ -12,3 +12,22 @@ body,
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
 }
+
+/* Keep the zoom control clear of the layer panel in the top-left corner. */
+.ol-zoom {
+  top: 3.3em;
+  right: 0.5em;
+  left: auto;
+}
+
+/* Stack the overview map above the scale line instead of on top of it. */
+.ol-viewport .ol-overviewmap {
+  bottom: 2.75em;
+}
+
+/* A collapsed overview map shows only its toggle button. Without this the
+ * invisible mini-map still captures clicks and drags in the lower-left corner
+ * because vue3-openlayers fades it with opacity instead of hiding it. */
+.ol-viewport .ol-overviewmap.ol-collapsed .ol-overviewmap-map {
+  display: none;
+}
