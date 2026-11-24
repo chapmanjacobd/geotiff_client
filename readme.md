@@ -58,13 +58,13 @@ in `src/colormaps.ts` is the Terracotta colormap set.
 
 ## Compute layer behaviour
 
-- The **first variable is the output raster**. It is always visible and owns the
-  color stretch controls.
-- Additional variables only restrict which output pixels are valid. Use
-  **Include in mask** to include or exclude a variable's filter range; they do
-  not replace the output raster.
-- Reordering variables changes which one is the output, so the stretch range
-  resets when a new output is selected.
+- Choose the **output variable** in the compute layer header. It supplies the
+  pixel values and owns the color stretch controls.
+- Every included variable, including the output, adds a validity mask. Use
+  **Include in mask** to toggle the other variables' filter ranges.
+- Variable order is only display order. Reordering does not change the output;
+  selecting a different output resets the stretch range to that variable's
+  range.
 - Filter and stretch bounds are clamped so filters cannot cross and the server
   never receives a stretch range with `max <= min`.
 - The server exposes five compute operands (`v1`–`v5`), so the UI caps a layer

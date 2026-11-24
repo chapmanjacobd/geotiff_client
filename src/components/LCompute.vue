@@ -22,12 +22,18 @@ export default defineComponent({
       map.setColorScale(props.layerId, value);
     };
 
+    const onOutputChange = (event: Event) => {
+      const value = (event.target as HTMLSelectElement).value;
+      map.setOutputVar(props.layerId, value);
+    };
+
     return {
       MAX_LAYER_VARS,
       COLORSCALES,
       layer,
       map,
       onColorScaleChange,
+      onOutputChange,
     };
   },
 });
@@ -62,12 +68,30 @@ export default defineComponent({
       </select>
     </div>
 
+    <div style="display: flex; flex-direction: column; gap: 0.2em">
+      <label style="font-size: 0.8em; color: #666">Output variable</label>
+      <select
+        :value="layer.outputVarId"
+        style="padding: 0.4em"
+        @change="onOutputChange"
+      >
+        <option
+          v-for="layerVar in layer.layerVars"
+          :key="layerVar.id"
+          :value="layerVar.id"
+        >
+          {{ layerVar.label }}
+        </option>
+      </select>
+    </div>
+
     <LayerControls :layer-id="layerId" />
 
     <p class="compute-help">
-      The first variable is the output raster. Additional variables only
-      restrict which output pixels are valid; use “Include in mask” to toggle
-      each extra variable.
+      The output variable supplies the pixel values and the color stretch.
+      Every included variable, including the output, adds a validity mask;
+      use “Include in mask” to toggle the others. Variable order is only
+      display order.
     </p>
 
     <div

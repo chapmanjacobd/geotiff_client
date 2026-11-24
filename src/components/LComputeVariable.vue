@@ -1,7 +1,7 @@
 <script lang="ts">
 import { computed, defineComponent } from "vue";
 import { stretchBounds } from "../ranges";
-import { useMapStore } from "../store/map";
+import { getOutputVar, useMapStore } from "../store/map";
 
 export default defineComponent({
   props: {
@@ -15,12 +15,12 @@ export default defineComponent({
       map.layerVarById(props.layerId, props.layerVarId)
     );
     const isOutput = computed(
-      () => layer.value?.layerVars[0]?.id === props.layerVarId
+      () => Boolean(layer.value) && getOutputVar(layer.value!)?.id === props.layerVarId
     );
     const datasetOptions = computed(() => {
       const currentLayer = layer.value;
       if (!currentLayer) return [];
-      const output = currentLayer.layerVars[0];
+      const output = getOutputVar(currentLayer);
       if (isOutput.value || !output) return map.datasets;
       return map.datasets.filter(
         (dataset) => dataset.someKeys === output.someKeys
@@ -177,7 +177,7 @@ export default defineComponent({
       <button
         type="button"
         :disabled="!map.canMoveLayerVarUp(layerId, layerVarId)"
-        title="Move toward the output"
+        title="Move up in the list"
         style="flex: 1; font-size: 0.8em; padding: 0.2em"
         @click="map.moveLayerVarUp(layerId, layerVarId)"
       >
@@ -186,7 +186,7 @@ export default defineComponent({
       <button
         type="button"
         :disabled="!map.canMoveLayerVarDown(layerId, layerVarId)"
-        title="Move away from the output"
+        title="Move down in the list"
         style="flex: 1; font-size: 0.8em; padding: 0.2em"
         @click="map.moveLayerVarDown(layerId, layerVarId)"
       >
@@ -287,6 +287,7 @@ export default defineComponent({
             :max="stretchLimits.max"
             step="any"
             :value="layer.stretchedRange.min"
+            :disabled="layerVar.loading"
             style="width: 60%"
             @input="onStretchMin"
           />
@@ -305,6 +306,7 @@ export default defineComponent({
             :max="stretchLimits.max"
             step="any"
             :value="layer.stretchedRange.max"
+            :disabled="layerVar.loading"
             style="width: 60%"
             @input="onStretchMax"
           />

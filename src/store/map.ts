@@ -49,6 +49,7 @@ export interface LayerBasemap extends LayerBase {
 export interface LayerCompute extends LayerBase {
   type: "l-compute";
   layerVars: LayerVar[];
+  outputVarId: string;
   colorScale: string;
   stretchedRange: LayerRange;
 }
@@ -62,34 +63,41 @@ function formatCoordinate(value: number): string {
   return value.toFixed(6);
 }
 
+export function getOutputVar(layer: LayerCompute): LayerVar | undefined {
+  return (
+    layer.layerVars.find((layerVar) => layerVar.id === layer.outputVarId) ??
+    layer.layerVars[0]
+  );
+}
+
 export function buildComputeUrl(
   layer: LayerCompute,
   tileSize: [number, number]
 ): string {
-  const output = layer.layerVars[0];
+  const output = getOutputVar(layer);
   if (!output || output.loading || output.error) return "";
 
-  const usable = layer.layerVars
-    .slice(0, MAX_LAYER_VARS)
-    .map((layerVar, index) => ({ layerVar, index: index + 1 }))
+  const masks = layer.layerVars
     .filter(
-      ({ layerVar }) =>
-        (layerVar.visible || layerVar === layer.layerVars[0]) &&
+      (layerVar) =>
+        layerVar !== output &&
+        layerVar.visible &&
         !layerVar.loading &&
         !layerVar.error &&
         layerVar.someKeys === output.someKeys
-    );
+    )
+    // Keep the URL stable when the UI list is reordered.
+    .sort((a, b) => a.id.localeCompare(b.id));
 
-  if (usable.length === 0) return "";
-
-  const masks = usable.map(
-    ({ layerVar, index }) =>
-      `getmask(masked_outside(v${index}, ${formatCoordinate(
+  const operands = [output, ...masks].slice(0, MAX_LAYER_VARS);
+  const maskExpressions = operands.map(
+    (layerVar, index) =>
+      `getmask(masked_outside(v${index + 1}, ${formatCoordinate(
         layerVar.filteredRange.min
       )}, ${formatCoordinate(layerVar.filteredRange.max)}))`
   );
 
-  const expression = `setmask(v1, ${masks.join(" | ")})`;
+  const expression = `setmask(v1, ${maskExpressions.join(" | ")})`;
   const params = new URLSearchParams({
     colormap: layer.colorScale,
     expression,
@@ -100,8 +108,8 @@ export function buildComputeUrl(
     tile_size: JSON.stringify([tileSize[0], tileSize[1]]),
   });
 
-  for (const { layerVar, index } of usable) {
-    params.set(`v${index}`, layerVar.file);
+  for (const [index, layerVar] of operands.entries()) {
+    params.set(`v${index + 1}`, layerVar.file);
   }
 
   const keyPath = output.someKeys ? `${output.someKeys}/` : "";
@@ -230,6 +238,7 @@ export const useMapStore = defineStore("map", {
         visible: true,
         colorScale: "accent_r",
         stretchedRange: { ...PLACEHOLDER_RANGE },
+        outputVarId: layerVar.id,
         layerVars: [layerVar],
       };
 
@@ -264,7 +273,7 @@ export const useMapStore = defineStore("map", {
         };
         layerVar.filteredRange = { ...layerVar.actualRange };
 
-        if (layer.layerVars[0]?.id === layerVarId) {
+        if (getOutputVar(layer)?.id === layerVarId) {
           layer.stretchedRange = initialStretch(layerVar.actualRange);
         }
       } catch (error) {
@@ -290,16 +299,28 @@ export const useMapStore = defineStore("map", {
       );
       if (!layer || !layerVar || !dataset) return;
 
-      const output = layer.layerVars[0];
+      const output = getOutputVar(layer);
       if (layerVar !== output && output && dataset.someKeys !== output.someKeys) {
         return;
       }
+
+      const outputChangesGroup =
+        layerVar === output &&
+        output !== undefined &&
+        dataset.someKeys !== output.someKeys;
 
       layerVar.datasetId = dataset.datasetId;
       layerVar.file = dataset.file;
       layerVar.label = dataset.label;
       layerVar.keys = [...dataset.keys];
       layerVar.someKeys = dataset.someKeys;
+
+      if (outputChangesGroup) {
+        layer.layerVars = layer.layerVars.filter(
+          (item) => item === layerVar || item.someKeys === dataset.someKeys
+        );
+      }
+
       await this.hydrateLayerVar(layerId, layerVarId);
     },
     setColorScale(layerId: string, colorScale: string) {
@@ -330,7 +351,7 @@ export const useMapStore = defineStore("map", {
     },
     setStretchMin(layerId: string, value: number) {
       const layer = this.computeLayerById(layerId);
-      const output = layer?.layerVars[0];
+      const output = layer ? getOutputVar(layer) : undefined;
       if (!layer || !output) return;
       layer.stretchedRange = clampStretchMin(
         layer.stretchedRange,
@@ -341,7 +362,7 @@ export const useMapStore = defineStore("map", {
     },
     setStretchMax(layerId: string, value: number) {
       const layer = this.computeLayerById(layerId);
-      const output = layer?.layerVars[0];
+      const output = layer ? getOutputVar(layer) : undefined;
       if (!layer || !output) return;
       layer.stretchedRange = clampStretchMax(
         layer.stretchedRange,
@@ -359,13 +380,23 @@ export const useMapStore = defineStore("map", {
       const layerVar = this.layerVarById(layerId, layerVarId);
       if (!layer || !layerVar) return;
 
-      const isOutput = layer.layerVars[0]?.id === layerVarId;
+      const isOutput = getOutputVar(layer)?.id === layerVarId;
       layerVar.visible = isOutput ? true : visible;
       this.scheduleRefresh(layerId);
     },
+    setOutputVar(layerId: string, layerVarId: string) {
+      const layer = this.computeLayerById(layerId);
+      const layerVar = this.layerVarById(layerId, layerVarId);
+      if (!layer || !layerVar) return;
+      if (layer.outputVarId === layerVarId) return;
+
+      layer.outputVarId = layerVarId;
+      this.syncOutput(layer);
+      this.refreshComputeLayerTileURL(layerId);
+    },
     async addLayerVar(layerId: string) {
       const layer = this.computeLayerById(layerId);
-      const output = layer?.layerVars[0];
+      const output = layer ? getOutputVar(layer) : undefined;
       if (!layer || !output) return;
       if (layer.layerVars.length >= MAX_LAYER_VARS) return;
 
@@ -385,22 +416,30 @@ export const useMapStore = defineStore("map", {
       );
       if (index < 0) return;
 
+      const removedOutput = getOutputVar(layer)?.id === layerVarId;
       layer.layerVars.splice(index, 1);
       if (layer.layerVars.length === 0) {
         this.removeLayer(layerId);
         return;
       }
 
-      if (index === 0) this.syncOutput(layer);
+      if (removedOutput) {
+        layer.outputVarId = layer.layerVars[0].id;
+        this.syncOutput(layer);
+      } else if (!layer.layerVars.some((item) => item.id === layer.outputVarId)) {
+        layer.outputVarId = layer.layerVars[0].id;
+        this.syncOutput(layer);
+      }
       this.refreshComputeLayerTileURL(layerId);
     },
     syncOutput(layer: LayerCompute) {
-      const output = layer.layerVars[0];
+      const output = getOutputVar(layer);
       if (!output) return;
       output.visible = true;
-      if (!output.loading && !output.error) {
-        layer.stretchedRange = initialStretch(output.actualRange);
-      }
+      layer.stretchedRange =
+        output.loading || output.error
+          ? { ...PLACEHOLDER_RANGE }
+          : initialStretch(output.actualRange);
     },
     canMoveLayerVarUp(layerId: string, layerVarId: string): boolean {
       const layer = this.computeLayerById(layerId);
@@ -427,7 +466,6 @@ export const useMapStore = defineStore("map", {
 
       const [moved] = layer.layerVars.splice(index, 1);
       layer.layerVars.splice(target, 0, moved);
-      if (index === 0 || target === 0) this.syncOutput(layer);
       this.refreshComputeLayerTileURL(layerId);
     },
     moveLayerVarUp(layerId: string, layerVarId: string) {

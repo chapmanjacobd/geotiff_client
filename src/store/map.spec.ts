@@ -30,6 +30,7 @@ const makeComputeLayer = (
   tileURL: "",
   colorScale: "accent_r",
   stretchedRange: { min: 0, max: 10 },
+  outputVarId: overrides.layerVars?.[0]?.id ?? "var-1",
   layerVars: [makeVar()],
   ...overrides,
 });
@@ -121,6 +122,48 @@ describe("buildComputeUrl", () => {
     const url = parseTileUrl(buildComputeUrl(layer, [256, 256]));
 
     expect(url.pathname).toBe("/compute/group/0/0/0.png");
+  });
+
+  it("uses the selected output instead of the first variable", () => {
+    const layer = makeComputeLayer({
+      outputVarId: "var-b",
+      stretchedRange: { min: 20, max: 30 },
+      layerVars: [
+        makeVar({ id: "var-a", file: "dataset-a" }),
+        makeVar({
+          id: "var-b",
+          datasetId: "dataset-b",
+          file: "dataset-b",
+          label: "dataset-b",
+          keys: ["dataset-b"],
+          actualRange: { min: 20, max: 30 },
+          filteredRange: { min: 20, max: 30 },
+        }),
+      ],
+    });
+
+    const url = parseTileUrl(buildComputeUrl(layer, [256, 256]));
+
+    expect(url.searchParams.get("expression")).toBe(
+      "setmask(v1, getmask(masked_outside(v1, 20.000000, 30.000000)) | getmask(masked_outside(v2, 0.000000, 10.000000)))"
+    );
+    expect(url.searchParams.get("v1")).toBe("dataset-b");
+    expect(url.searchParams.get("v2")).toBe("dataset-a");
+  });
+
+  it("keeps the URL stable when the display order changes", () => {
+    const layer = makeComputeLayer({
+      layerVars: [
+        makeVar({ id: "var-a", file: "dataset-a" }),
+        makeVar({ id: "var-b", file: "dataset-b" }),
+      ],
+    });
+
+    const before = buildComputeUrl(layer, [256, 256]);
+    layer.layerVars.reverse();
+    const after = buildComputeUrl(layer, [256, 256]);
+
+    expect(after).toBe(before);
   });
 
   it("returns no URL while the output metadata is loading", () => {
@@ -218,6 +261,7 @@ describe("map store", () => {
     expect(layerVar.loading).toBe(false);
     expect(layerVar.actualRange).toEqual({ min: 1, max: 9 });
     expect(layerVar.filteredRange).toEqual({ min: 1, max: 9 });
+    expect(layer.outputVarId).toBe(layerVar.id);
     expect(layer.stretchedRange).toEqual({ min: 1, max: 9 });
     expect(layer.tileURL).toContain("expression=");
     expect(layer.tileURL).toContain("tile_size=%5B512%2C512%5D");
@@ -236,9 +280,39 @@ describe("map store", () => {
     expect(firstVar.file).toBe("dataset-b");
     expect(firstVar.actualRange).toEqual({ min: 5, max: 20 });
     expect(firstVar.filteredRange).toEqual({ min: 5, max: 20 });
+    expect((map.layers[0] as LayerCompute).stretchedRange).toEqual({
+      min: 5,
+      max: 20,
+    });
   });
 
-  it("moves variables without creating holes and keeps the output visible", () => {
+  it("selects a different output and resets stretch to its range", () => {
+    const layer = makeComputeLayer({
+      id: "layer-1",
+      layerVars: [
+        makeVar({ id: "a", file: "a", actualRange: { min: 0, max: 10 } }),
+        makeVar({
+          id: "b",
+          file: "b",
+          actualRange: { min: 20, max: 30 },
+          visible: false,
+        }),
+      ],
+    });
+    map.layers.push(layer);
+
+    map.setOutputVar("layer-1", "b");
+
+    expect(layer.outputVarId).toBe("b");
+    expect(layer.stretchedRange).toEqual({ min: 20, max: 30 });
+    expect(layer.layerVars[1].visible).toBe(true);
+
+    const url = parseTileUrl(buildComputeUrl(layer, [256, 256]));
+    expect(url.searchParams.get("v1")).toBe("b");
+    expect(url.searchParams.get("v2")).toBe("a");
+  });
+
+  it("moves variables without changing the selected output", () => {
     const layer = makeComputeLayer({
       id: "layer-1",
       stretchedRange: { min: 0, max: 10 },
@@ -263,9 +337,8 @@ describe("map store", () => {
       "a",
       "b",
     ]);
-    expect(layer.layerVars[0].id).toBe("c");
-    expect(layer.layerVars[0].visible).toBe(true);
-    expect(layer.stretchedRange).toEqual({ min: 50, max: 60 });
+    expect(layer.outputVarId).toBe("a");
+    expect(layer.stretchedRange).toEqual({ min: 0, max: 10 });
     expect(layer.layerVars.every(Boolean)).toBe(true);
   });
 
@@ -297,6 +370,7 @@ describe("map store", () => {
 
     expect(layer.layerVars).toHaveLength(1);
     expect(layer.layerVars[0].id).toBe("b");
+    expect(layer.outputVarId).toBe("b");
     expect(layer.layerVars[0].visible).toBe(true);
     expect(layer.stretchedRange).toEqual({ min: 20, max: 30 });
   });
