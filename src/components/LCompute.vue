@@ -59,6 +59,7 @@ export default defineComponent({
       <label style="font-size: 0.8em; color: #666">Colorscale</label>
       <select
         :value="layer.colorScale"
+        aria-label="Colorscale"
         style="padding: 0.4em"
         @change="onColorScaleChange"
       >
@@ -72,6 +73,7 @@ export default defineComponent({
       <label style="font-size: 0.8em; color: #666">Output variable</label>
       <select
         :value="layer.outputVarId"
+        aria-label="Output variable"
         style="padding: 0.4em"
         @change="onOutputChange"
       >
@@ -88,10 +90,8 @@ export default defineComponent({
     <LayerControls :layer-id="layerId" />
 
     <p class="compute-help">
-      The output variable supplies the pixel values and the color stretch.
-      Every included variable, including the output, adds a validity mask;
-      use “Include in mask” to toggle the others. Variable order is only
-      display order.
+      The output supplies values and color stretch. Each included variable adds
+      a validity mask; variable order is display order only.
     </p>
 
     <div

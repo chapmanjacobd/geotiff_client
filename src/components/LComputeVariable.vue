@@ -38,7 +38,7 @@ export default defineComponent({
     );
 
     const formatValue = (value: number): string =>
-      value.toLocaleString(undefined, { maximumFractionDigits: 4 });
+      value.toLocaleString(undefined, { maximumFractionDigits: 6 });
 
     const onDatasetChange = (event: Event) => {
       const value = (event.target as HTMLSelectElement).value;
@@ -154,6 +154,7 @@ export default defineComponent({
     <select
       :value="layerVar.datasetId"
       :disabled="layerVar.loading"
+      aria-label="Variable dataset"
       style="padding: 0.3em; width: 100%"
       @change="onDatasetChange"
     >
@@ -230,7 +231,8 @@ export default defineComponent({
             :max="layerVar.actualRange.max"
             step="any"
             :value="layerVar.filteredRange.min"
-            :disabled="layerVar.loading"
+            :disabled="layerVar.loading || Boolean(layerVar.error)"
+            aria-label="Filter minimum"
             style="width: 60%"
             @input="onFilterMin"
           />
@@ -249,7 +251,8 @@ export default defineComponent({
             :max="layerVar.actualRange.max"
             step="any"
             :value="layerVar.filteredRange.max"
-            :disabled="layerVar.loading"
+            :disabled="layerVar.loading || Boolean(layerVar.error)"
+            aria-label="Filter maximum"
             style="width: 60%"
             @input="onFilterMax"
           />
@@ -287,7 +290,8 @@ export default defineComponent({
             :max="stretchLimits.max"
             step="any"
             :value="layer.stretchedRange.min"
-            :disabled="layerVar.loading"
+            :disabled="layerVar.loading || Boolean(layerVar.error)"
+            aria-label="Stretch minimum"
             style="width: 60%"
             @input="onStretchMin"
           />
@@ -306,7 +310,8 @@ export default defineComponent({
             :max="stretchLimits.max"
             step="any"
             :value="layer.stretchedRange.max"
-            :disabled="layerVar.loading"
+            :disabled="layerVar.loading || Boolean(layerVar.error)"
+            aria-label="Stretch maximum"
             style="width: 60%"
             @input="onStretchMax"
           />

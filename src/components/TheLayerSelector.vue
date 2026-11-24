@@ -11,7 +11,12 @@ export default defineComponent({
   },
   setup() {
     const map = useMapStore();
-    const isCollapsed = ref(false);
+    // On phones an open 20em panel covers almost the whole map, so start
+    // collapsed and let the user open it when they need the controls.
+    const isCollapsed = ref(
+      typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 600px)").matches
+    );
 
     onMounted(() => {
       void map.initialize();
@@ -36,13 +41,16 @@ export default defineComponent({
       type="button"
       class="toggle-btn"
       :title="isCollapsed ? 'Open layer panel' : 'Close layer panel'"
+      :aria-label="isCollapsed ? 'Open layer panel' : 'Close layer panel'"
+      :aria-expanded="!isCollapsed"
+      aria-controls="layer-panel"
       @click="isCollapsed = !isCollapsed"
     >
       <span v-if="isCollapsed">☰</span>
       <span v-else>×</span>
     </button>
 
-    <div v-show="!isCollapsed" class="sidebar-content">
+    <div id="layer-panel" v-show="!isCollapsed" class="sidebar-content">
       <div class="logo-area">
         <a href="https://unli.xyz/">
           <img
@@ -56,6 +64,8 @@ export default defineComponent({
           <button
             type="button"
             title="Single map"
+            aria-label="Single map"
+            :aria-pressed="map.splitMode === 'single'"
             :class="{ active: map.splitMode === 'single' }"
             @click="setSplitMode('single')"
           >
@@ -64,6 +74,8 @@ export default defineComponent({
           <button
             type="button"
             title="Two maps side by side"
+            aria-label="Two maps side by side"
+            :aria-pressed="map.splitMode === 'horizontal'"
             :class="{ active: map.splitMode === 'horizontal' }"
             @click="setSplitMode('horizontal')"
           >
@@ -72,6 +84,8 @@ export default defineComponent({
           <button
             type="button"
             title="Two maps stacked"
+            aria-label="Two maps stacked"
+            :aria-pressed="map.splitMode === 'vertical'"
             :class="{ active: map.splitMode === 'vertical' }"
             @click="setSplitMode('vertical')"
           >
@@ -134,7 +148,7 @@ export default defineComponent({
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   display: flex;
   transition: all 0.3s ease;
-  width: 20em;
+  width: min(20em, calc(100vw - 20px));
   left: 10px;
   top: 10px;
   border-radius: 8px;
@@ -173,10 +187,17 @@ export default defineComponent({
 .sidebar:not(.collapsed) .toggle-btn {
   left: auto;
   right: -15px;
-  top: -15px;
+  top: 4px;
   width: 30px;
   height: 30px;
   background: #f44336;
+}
+
+@media (max-width: 420px) {
+  .sidebar:not(.collapsed) .toggle-btn {
+    right: 0;
+    top: 0;
+  }
 }
 
 .sidebar-content {

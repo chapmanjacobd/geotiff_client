@@ -39,6 +39,7 @@ export default defineComponent({
       <label style="font-size: 0.8em; color: #666">Source</label>
       <select
         :value="layer.tileURL"
+        aria-label="Basemap source"
         style="padding: 0.4em"
         @change="onSourceChange"
       >
