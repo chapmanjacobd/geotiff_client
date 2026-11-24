@@ -3,20 +3,20 @@
   "version": "1.0.0",
   "scripts": {
     "start": "vite",
-    "build": "trash-put dist/; vite build",
+    "build": "vite build",
     "serve": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "@vitejs/plugin-vue": "^6.0.11",
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.3",
     "vite": "^8.3.8",
-    "vitest": "^5.1.1"
+    "vitest": "^5.1.1",
+    "vue-tsc": "^3.3.14"
   },
   "dependencies": {
-    "@vue/devtools-api": "^8.2.1",
     "ol": "^10.11.0",
     "pinia": "^4.1.0",
     "uuid": "^14.0.3",
