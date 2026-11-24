@@ -1,64 +1,124 @@
-<script lang='ts'>
-import LCompute from "./LCompute.vue";
+<script lang="ts">
+import { defineComponent, onMounted, ref } from "vue";
+import { useMapStore, type LayerType } from "../store/map";
 import LBasemap from "./LBasemap.vue";
-import { defineComponent, ref } from "vue"
-import { useMapStore } from "../store/map";
+import LCompute from "./LCompute.vue";
 
 export default defineComponent({
   components: {
-    'l-compute': LCompute,
-    'l-basemap': LBasemap
+    "l-compute": LCompute,
+    "l-basemap": LBasemap,
   },
   setup() {
-    const map = useMapStore()
-    const isCollapsed = ref(false)
+    const map = useMapStore();
+    const isCollapsed = ref(false);
 
-    const addComponent = function (type) {
-      map.addLayer(type)
-    }
+    onMounted(() => {
+      void map.initialize();
+    });
 
-    const setSplitMode = (mode: 'single' | 'horizontal' | 'vertical') => {
-      map.splitMode = mode
-    }
+    const addComponent = (type: LayerType) => {
+      void map.addLayer(type);
+    };
 
-    return { addComponent, map, isCollapsed, setSplitMode }
+    const setSplitMode = (mode: "single" | "horizontal" | "vertical") => {
+      map.setSplitMode(mode);
+    };
+
+    return { addComponent, map, isCollapsed, setSplitMode };
   },
-})
+});
 </script>
 
 <template>
-  <div
-    :class="['sidebar', { collapsed: isCollapsed }]"
-  >
-    <button @click="isCollapsed = !isCollapsed" class="toggle-btn">
+  <div :class="['sidebar', { collapsed: isCollapsed }]">
+    <button
+      type="button"
+      class="toggle-btn"
+      :title="isCollapsed ? 'Open layer panel' : 'Close layer panel'"
+      @click="isCollapsed = !isCollapsed"
+    >
       <span v-if="isCollapsed">☰</span>
       <span v-else>×</span>
     </button>
 
-    <div v-if="!isCollapsed" class="sidebar-content">
+    <div v-show="!isCollapsed" class="sidebar-content">
       <div class="logo-area">
         <a href="https://unli.xyz/">
-          <img src="https://unli.xyz/unli.png" alt="UNLI" width="40" height="40" />
+          <img
+            src="https://unli.xyz/unli.png"
+            alt="UNLI"
+            width="40"
+            height="40"
+          />
         </a>
         <div class="split-controls">
-           <button @click="setSplitMode('single')" :class="{active: map.splitMode === 'single'}">S</button>
-           <button @click="setSplitMode('horizontal')" :class="{active: map.splitMode === 'horizontal'}">H</button>
-           <button @click="setSplitMode('vertical')" :class="{active: map.splitMode === 'vertical'}">V</button>
+          <button
+            type="button"
+            title="Single map"
+            :class="{ active: map.splitMode === 'single' }"
+            @click="setSplitMode('single')"
+          >
+            S
+          </button>
+          <button
+            type="button"
+            title="Two maps side by side"
+            :class="{ active: map.splitMode === 'horizontal' }"
+            @click="setSplitMode('horizontal')"
+          >
+            H
+          </button>
+          <button
+            type="button"
+            title="Two maps stacked"
+            :class="{ active: map.splitMode === 'vertical' }"
+            @click="setSplitMode('vertical')"
+          >
+            V
+          </button>
         </div>
+      </div>
+
+      <div v-if="map.catalogLoading" class="catalog-status">
+        Loading datasets from server…
+      </div>
+      <div v-else-if="map.catalogError" class="catalog-status catalog-error">
+        <span>Dataset catalog unavailable: {{ map.catalogError }}</span>
+        <button type="button" @click="map.reloadCatalog()">Retry</button>
       </div>
 
       <div class="layers-list">
-        <div v-for="layer in [...map.layers].reverse()" :key="layer.id" class="layer-item">
-          <component
-            :is="layer.type"
-            v-bind="{ layerId: layer.id }"
-          ></component>
+        <div
+          v-for="layer in [...map.layers].reverse()"
+          :key="layer.id"
+          class="layer-item"
+        >
+          <component :is="layer.type" :layer-id="layer.id" />
         </div>
+        <p v-if="map.layers.length === 0" class="empty-text">
+          Add a basemap to get started.
+        </p>
       </div>
 
       <div class="footer-actions">
-        <button type="button" @click="addComponent('l-basemap')">+ Basemap</button>
-        <button type="button" @click="addComponent('l-compute')">+ Compute</button>
+        <button type="button" @click="addComponent('l-basemap')">
+          + Basemap
+        </button>
+        <button
+          type="button"
+          :disabled="
+            map.catalogLoading || !map.hasDatasets
+          "
+          :title="
+            map.hasDatasets
+              ? 'Add a compute layer'
+              : 'Compute layers require the dataset catalog'
+          "
+          @click="addComponent('l-compute')"
+        >
+          + Compute
+        </button>
       </div>
     </div>
   </div>
@@ -71,7 +131,7 @@ export default defineComponent({
   background-color: white;
   height: auto;
   max-height: 90vh;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   display: flex;
   transition: all 0.3s ease;
   width: 20em;
@@ -102,7 +162,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 10000;
 }
 
@@ -151,6 +211,25 @@ export default defineComponent({
   border-color: #0056b3;
 }
 
+.catalog-status {
+  padding: 0.5em 1em;
+  font-size: 0.75em;
+  color: #555;
+  border-bottom: 1px solid #eee;
+}
+
+.catalog-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  color: #b91c1c;
+}
+
+.catalog-error button {
+  flex-shrink: 0;
+}
+
 .layers-list {
   flex: 1;
   overflow-y: auto;
@@ -162,6 +241,14 @@ export default defineComponent({
   border: 1px solid #eee;
   padding: 0.5em;
   border-radius: 4px;
+}
+
+.empty-text {
+  margin: 0;
+  padding: 1em 0.5em;
+  font-size: 0.8em;
+  color: #777;
+  text-align: center;
 }
 
 .footer-actions {
@@ -176,5 +263,10 @@ export default defineComponent({
   padding: 0.5em;
   cursor: pointer;
   font-size: 0.8em;
+}
+
+.footer-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 </style>

@@ -1,8 +1,24 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
-import { computeQueryParams, useMapStore } from "./map";
-import type { LayerCompute } from "./map";
-import { LAYER_VARS } from "../data";
+import type { ServerDataset } from "../api";
+import { buildComputeUrl, useMapStore } from "./map";
+import type { LayerCompute, LayerVar } from "./map";
+
+const makeVar = (overrides: Partial<LayerVar> = {}): LayerVar => ({
+  type: "l-compute-variable",
+  id: "var-1",
+  datasetId: "dataset-a",
+  file: "dataset-a",
+  label: "dataset-a",
+  keys: ["dataset-a"],
+  someKeys: "",
+  actualRange: { min: 0, max: 10 },
+  filteredRange: { min: 0, max: 10 },
+  visible: true,
+  loading: false,
+  error: null,
+  ...overrides,
+});
 
 const makeComputeLayer = (
   overrides: Partial<LayerCompute> = {}
@@ -14,77 +30,105 @@ const makeComputeLayer = (
   tileURL: "",
   colorScale: "accent_r",
   stretchedRange: { min: 0, max: 10 },
-  layerVars: [
-    {
-      type: "l-compute-variable",
-      id: "var-1",
-      file: "dataset-a",
-      actualRange: { min: 0, max: 10 },
-      filteredRange: { min: 0, max: 10 },
-      visible: true,
-    },
-  ],
+  layerVars: [makeVar()],
   ...overrides,
+});
+
+const makeDataset = (file: string): ServerDataset => ({
+  keys: [file],
+  datasetId: file,
+  label: file,
+  file,
+  someKeys: "",
 });
 
 const parseTileUrl = (tileURL: string): URL =>
   new URL(tileURL.replace("{z}/{x}/{y}", "0/0/0"));
 
-describe("computeQueryParams", () => {
-  it("builds a single variable expression", () => {
+const jsonResponse = (body: unknown): Response =>
+  new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+
+describe("buildComputeUrl", () => {
+  it("applies the filter even with a single variable", () => {
     const layer = makeComputeLayer();
 
-    computeQueryParams(layer);
+    const url = parseTileUrl(buildComputeUrl(layer, [256, 256]));
 
-    const url = parseTileUrl(layer.tileURL);
     expect(url.pathname).toBe("/compute/0/0/0.png");
     expect(url.searchParams.get("colormap")).toBe("accent_r");
-    expect(url.searchParams.get("expression")).toBe("v1");
-    expect(url.searchParams.get("v1")).toBe("dataset-a");
-    expect(url.searchParams.get("stretch_range")).toBe(
-      '["0.000000","10.000000"]'
+    expect(url.searchParams.get("expression")).toBe(
+      "setmask(v1, getmask(masked_outside(v1, 0.000000, 10.000000)))"
     );
+    expect(url.searchParams.get("v1")).toBe("dataset-a");
+    expect(url.searchParams.get("stretch_range")).toBe("[0,10]");
+    expect(url.searchParams.get("tile_size")).toBe("[256,256]");
   });
 
   it("builds a mask expression from multiple visible variables", () => {
     const layer = makeComputeLayer({
       layerVars: [
-        {
-          type: "l-compute-variable",
-          id: "var-1",
-          file: "dataset-a",
-          actualRange: { min: 0, max: 10 },
-          filteredRange: { min: 0, max: 10 },
-          visible: true,
-        },
-        {
-          type: "l-compute-variable",
+        makeVar(),
+        makeVar({
           id: "var-2",
+          datasetId: "dataset-b",
           file: "dataset-b",
+          label: "dataset-b",
+          keys: ["dataset-b"],
           actualRange: { min: 0, max: 20 },
           filteredRange: { min: 2, max: 18 },
-          visible: true,
-        },
+        }),
       ],
     });
 
-    computeQueryParams(layer);
+    const url = parseTileUrl(buildComputeUrl(layer, [512, 512]));
 
-    const url = parseTileUrl(layer.tileURL);
     expect(url.searchParams.get("expression")).toBe(
       "setmask(v1, getmask(masked_outside(v1, 0.000000, 10.000000)) | getmask(masked_outside(v2, 2.000000, 18.000000)))"
     );
     expect(url.searchParams.get("v1")).toBe("dataset-a");
     expect(url.searchParams.get("v2")).toBe("dataset-b");
+    expect(url.searchParams.get("tile_size")).toBe("[512,512]");
+  });
+
+  it("ignores variables that are not included in the mask", () => {
+    const layer = makeComputeLayer({
+      layerVars: [
+        makeVar(),
+        makeVar({
+          id: "var-2",
+          file: "dataset-b",
+          visible: false,
+        }),
+      ],
+    });
+
+    const url = parseTileUrl(buildComputeUrl(layer, [256, 256]));
+
+    expect(url.searchParams.get("expression")).toBe(
+      "setmask(v1, getmask(masked_outside(v1, 0.000000, 10.000000)))"
+    );
+    expect(url.searchParams.has("v2")).toBe(false);
   });
 
   it("includes path keys before the tile coordinates", () => {
-    const layer = makeComputeLayer();
+    const layer = makeComputeLayer({
+      layerVars: [makeVar({ keys: ["group", "dataset-a"], someKeys: "group" })],
+    });
 
-    computeQueryParams(layer, "group");
+    const url = parseTileUrl(buildComputeUrl(layer, [256, 256]));
 
-    const url = parseTileUrl(layer.tileURL);
     expect(url.pathname).toBe("/compute/group/0/0/0.png");
+  });
+
+  it("returns no URL while the output metadata is loading", () => {
+    const layer = makeComputeLayer({
+      layerVars: [makeVar({ loading: true })],
+    });
+
+    expect(buildComputeUrl(layer, [256, 256])).toBe("");
   });
 });
 
@@ -94,99 +138,225 @@ describe("map store", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     map = useMapStore();
+    map.datasets = [makeDataset("dataset-a"), makeDataset("dataset-b")];
+    map.tileSize = [512, 512];
   });
 
-  it("starts empty in single split mode", () => {
-    expect(map.layersCount).toBe(0);
-    expect(map.splitMode).toBe("single");
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it("adds a compute layer with a tile URL and a random variable", () => {
-    map.addLayer("l-compute");
+  it("adds a basemap with a default source", () => {
+    const layer = map.addBasemap();
 
     expect(map.layersCount).toBe(1);
-    const layer = map.layers[0] as LayerCompute;
-    expect(layer.type).toBe("l-compute");
-    expect(layer.colorScale).toBe("accent_r");
-    expect(layer.layerVars).toHaveLength(1);
-    expect(layer.stretchedRange).toEqual(layer.layerVars[0].actualRange);
-    expect(parseTileUrl(layer.tileURL).pathname).toBe("/compute/0/0/0.png");
-    expect(LAYER_VARS.map((lv) => lv.file)).toContain(layer.layerVars[0].file);
+    expect(layer.type).toBe("l-basemap");
+    expect(layer.tileURL).toContain("openstreetmap.org");
+    expect(layer.attribution).toContain("OpenStreetMap");
   });
 
-  it("adds a basemap layer", () => {
-    map.addLayer("l-basemap");
+  it("loads the catalog and probes the server tile size", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/keys")) {
+          return jsonResponse({ keys: [{ key: "file" }] });
+        }
+        if (url.includes("/datasets?")) {
+          return jsonResponse({
+            datasets: [{ file: "dataset-a" }, { file: "dataset-b" }],
+            limit: 500,
+            page: 0,
+          });
+        }
+        throw new Error(`unexpected request: ${url}`);
+      })
+    );
+
+    await map.initialize();
 
     expect(map.layersCount).toBe(1);
-    expect(map.layers[0]).toMatchObject({
-      type: "l-basemap",
-      visible: true,
-      opacity: 0.8,
+    expect(map.layers[0].type).toBe("l-basemap");
+    expect(map.datasets.map((dataset) => dataset.file)).toEqual([
+      "dataset-a",
+      "dataset-b",
+    ]);
+    expect(map.tileSize).toEqual([256, 256]);
+    expect(map.catalogError).toBeNull();
+  });
+
+  it("keeps the basemap when the catalog cannot be loaded", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("server is down");
+      })
+    );
+
+    await map.initialize();
+
+    expect(map.layersCount).toBe(1);
+    expect(map.catalogError).toContain("server is down");
+  });
+
+  it("adds a compute layer and hydrates its range from metadata", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({ range: [1, 9], percentiles: [2, 3] })
+      )
+    );
+
+    const layer = await map.addLayer("l-compute");
+
+    expect(layer?.type).toBe("l-compute");
+    if (!layer || layer.type !== "l-compute") return;
+
+    const layerVar = layer.layerVars[0];
+    expect(layerVar.loading).toBe(false);
+    expect(layerVar.actualRange).toEqual({ min: 1, max: 9 });
+    expect(layerVar.filteredRange).toEqual({ min: 1, max: 9 });
+    expect(layer.stretchedRange).toEqual({ min: 1, max: 9 });
+    expect(layer.tileURL).toContain("expression=");
+    expect(layer.tileURL).toContain("tile_size=%5B512%2C512%5D");
+  });
+
+  it("updates ranges when the dataset changes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ range: [5, 20] }))
+    );
+    map.layers.push(makeComputeLayer({ id: "layer-1" }));
+    const firstVar = (map.layers[0] as LayerCompute).layerVars[0];
+
+    await map.setLayerVarDataset("layer-1", firstVar.id, "dataset-b");
+
+    expect(firstVar.file).toBe("dataset-b");
+    expect(firstVar.actualRange).toEqual({ min: 5, max: 20 });
+    expect(firstVar.filteredRange).toEqual({ min: 5, max: 20 });
+  });
+
+  it("moves variables without creating holes and keeps the output visible", () => {
+    const layer = makeComputeLayer({
+      id: "layer-1",
+      stretchedRange: { min: 0, max: 10 },
+      layerVars: [
+        makeVar({ id: "a", file: "a", actualRange: { min: 0, max: 10 } }),
+        makeVar({ id: "b", file: "b", actualRange: { min: 2, max: 4 } }),
+        makeVar({ id: "c", file: "c", actualRange: { min: 50, max: 60 } }),
+      ],
     });
+    map.layers.push(layer);
+
+    map.moveLayerVarUp("layer-1", "c");
+    expect(layer.layerVars.map((layerVar) => layerVar.id)).toEqual([
+      "a",
+      "c",
+      "b",
+    ]);
+
+    map.moveLayerVarDown("layer-1", "a");
+    expect(layer.layerVars.map((layerVar) => layerVar.id)).toEqual([
+      "c",
+      "a",
+      "b",
+    ]);
+    expect(layer.layerVars[0].id).toBe("c");
+    expect(layer.layerVars[0].visible).toBe(true);
+    expect(layer.stretchedRange).toEqual({ min: 50, max: 60 });
+    expect(layer.layerVars.every(Boolean)).toBe(true);
   });
 
-  it("removes a layer and bumps the revision", () => {
-    map.addLayer("l-basemap");
-    const layerId = map.layers[0].id;
-    const revision = map.revision;
+  it("does nothing when moving a variable past the end", () => {
+    const layer = makeComputeLayer({
+      id: "layer-1",
+      layerVars: [makeVar({ id: "a" }), makeVar({ id: "b" })],
+    });
+    map.layers.push(layer);
 
-    map.removeLayer(layerId);
+    map.moveLayerVarUp("layer-1", "a");
+    map.moveLayerVarDown("layer-1", "b");
 
-    expect(map.layersCount).toBe(0);
-    expect(map.revision).toBe(revision + 1);
+    expect(layer.layerVars.map((layerVar) => layerVar.id)).toEqual(["a", "b"]);
+    expect(layer.layerVars).toHaveLength(2);
   });
 
-  it("moves layers up and down", () => {
-    map.addLayer("l-basemap");
-    map.addLayer("l-basemap");
+  it("promotes the next variable when the output is removed", () => {
+    const layer = makeComputeLayer({
+      id: "layer-1",
+      layerVars: [
+        makeVar({ id: "a", actualRange: { min: 0, max: 10 } }),
+        makeVar({ id: "b", actualRange: { min: 20, max: 30 }, visible: false }),
+      ],
+    });
+    map.layers.push(layer);
+
+    map.removeLayerVar("layer-1", "a");
+
+    expect(layer.layerVars).toHaveLength(1);
+    expect(layer.layerVars[0].id).toBe("b");
+    expect(layer.layerVars[0].visible).toBe(true);
+    expect(layer.stretchedRange).toEqual({ min: 20, max: 30 });
+  });
+
+  it("caps the number of variables at five", async () => {
+    const layer = makeComputeLayer({
+      id: "layer-1",
+      layerVars: [
+        makeVar({ id: "a" }),
+        makeVar({ id: "b" }),
+        makeVar({ id: "c" }),
+        makeVar({ id: "d" }),
+        makeVar({ id: "e" }),
+      ],
+    });
+    map.layers.push(layer);
+
+    await map.addLayerVar("layer-1");
+
+    expect(layer.layerVars).toHaveLength(5);
+  });
+
+  it("clamps filter ranges so min never exceeds max", () => {
+    map.layers.push(makeComputeLayer({ id: "layer-1" }));
+
+    map.setFilteredMin("layer-1", "var-1", 999);
+    map.setFilteredMax("layer-1", "var-1", -5);
+
+    const layerVar = (map.layers[0] as LayerCompute).layerVars[0];
+    expect(layerVar.filteredRange.min).toBeLessThanOrEqual(
+      layerVar.filteredRange.max
+    );
+    expect(layerVar.filteredRange.min).toBeGreaterThanOrEqual(0);
+    expect(layerVar.filteredRange.max).toBeLessThanOrEqual(10);
+  });
+
+  it("keeps stretch bounds strictly ordered", () => {
+    map.layers.push(makeComputeLayer({ id: "layer-1" }));
+
+    map.setStretchMin("layer-1", 10);
+    let layer = map.layers[0] as LayerCompute;
+    expect(layer.stretchedRange.min).toBeLessThan(layer.stretchedRange.max);
+
+    map.setStretchMax("layer-1", -100);
+    layer = map.layers[0] as LayerCompute;
+    expect(layer.stretchedRange.min).toBeLessThan(layer.stretchedRange.max);
+  });
+
+  it("moves layers forward and backward with bounds checks", () => {
+    map.addBasemap();
+    map.addBasemap();
     const [first, second] = map.layers.map((layer) => layer.id);
 
-    map.moveLayerUp(first);
+    map.moveLayerForward(first);
     expect(map.layers.map((layer) => layer.id)).toEqual([second, first]);
 
-    map.moveLayerDown(first);
+    map.moveLayerBackward(first);
     expect(map.layers.map((layer) => layer.id)).toEqual([first, second]);
-  });
 
-  it("adds and removes compute variables", () => {
-    map.addLayer("l-compute");
-    const layerId = map.layers[0].id;
-
-    map.addLayerVar(layerId);
-    expect((map.layers[0] as LayerCompute).layerVars).toHaveLength(2);
-
-    const [firstVar, secondVar] = (map.layers[0] as LayerCompute).layerVars;
-    map.removeLayerVar(layerId, firstVar.id);
-    expect((map.layers[0] as LayerCompute).layerVars).toHaveLength(1);
-
-    map.removeLayerVar(layerId, secondVar.id);
-    expect(map.layersCount).toBe(0);
-  });
-
-  it("updates a variable from the layer variable catalog", () => {
-    map.addLayer("l-compute");
-    const layer = map.layers[0] as LayerCompute;
-    const layerVar = layer.layerVars[0];
-    const nextFile = LAYER_VARS.find((lv) => lv.file !== layerVar.file)!.file;
-    layerVar.file = nextFile;
-
-    map.updateLayerVar(layer.id, layerVar.id);
-
-    expect(layerVar.file).toBe(nextFile);
-    expect(layerVar.actualRange).toEqual({
-      min: LAYER_VARS.find((lv) => lv.file === nextFile)!.min,
-      max: LAYER_VARS.find((lv) => lv.file === nextFile)!.max,
-    });
-  });
-
-  it("toggles layer visibility", () => {
-    map.addLayer("l-basemap");
-    const layer = map.layers[0];
-
-    map.toggleLayerVisibility(layer.id);
-    expect(layer.visible).toBe(false);
-
-    map.toggleLayerVisibility(layer.id);
-    expect(layer.visible).toBe(true);
+    map.moveLayerForward(second);
+    expect(map.layers.map((layer) => layer.id)).toEqual([first, second]);
   });
 });
